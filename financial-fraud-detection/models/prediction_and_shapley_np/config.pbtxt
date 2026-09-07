@@ -1,0 +1,123 @@
+name: "prediction_and_shapley_np"
+backend: "python"
+
+input [
+  {
+    name: "x_merchant"
+    data_type: TYPE_FP32
+    dims: [ -1, 24 ]
+  },
+  {
+    name: "x_transaction"
+    data_type: TYPE_FP32
+    dims: [ -1, 38 ]
+  },
+  {
+    name: "x_user"
+    data_type: TYPE_FP32
+    dims: [ -1, 13 ]
+  },
+  {
+    name: "COMPUTE_SHAP"
+    data_type: TYPE_BOOL
+    dims: [ 1 ]
+  },
+  {
+    name: "feature_mask_merchant"
+    data_type: TYPE_INT32
+    dims: [ 24 ]
+  },
+  {
+    name: "feature_mask_transaction"
+    data_type: TYPE_INT32
+    dims: [ 38 ]
+  },
+  {
+    name: "feature_mask_user"
+    data_type: TYPE_INT32
+    dims: [ 13 ]
+  },
+  {
+    name: "edge_index_transaction_to_merchant"
+    data_type: TYPE_INT64
+    dims: [ 2, -1 ]
+  },
+  {
+    name: "edge_index_user_to_transaction"
+    data_type: TYPE_INT64
+    dims: [ 2, -1 ]
+  }
+]
+
+output [
+  {
+    name: "PREDICTION"
+    data_type: TYPE_FP32
+    dims: [ -1, 1 ]
+  },
+  {
+    name: "shap_values_merchant"
+    data_type: TYPE_FP32
+    dims: [ -1, 24 ]
+  },
+  {
+    name: "shap_values_transaction"
+    data_type: TYPE_FP32
+    dims: [ -1, 38 ]
+  },
+  {
+    name: "shap_values_user"
+    data_type: TYPE_FP32
+    dims: [ -1, 13 ]
+  }
+]
+
+instance_group [
+  {
+    kind: KIND_GPU
+  }
+]
+parameters: {
+  key: "node_type_to_predict"
+  value: { string_value: "transaction" }
+}
+
+parameters: {
+  key: "rev_message_pass"
+  value: { string_value: "false" }
+}
+
+parameters: {
+  key: "num_layers"
+  value: { string_value: "2" }
+}
+
+parameters: {
+  key: "hidden_channels"
+  value: { string_value: "32" }
+}
+
+parameters: {
+  key: "out_channels"
+  value: { string_value: "2" }
+}
+
+parameters: {
+  key: "conv_class"
+  value: { string_value: "SAGEConv" }
+}
+
+parameters: {
+  key: "embedding_generator_model_state_dict"
+  value: { string_value: "state_dict_gnn_model_np.pth" }
+}
+
+parameters: {
+  key: "embeddings_based_xgboost_model"
+  value: { string_value: "xgboost_model_np.json" }
+}
+
+parameters: {
+  key: "shap_n_samples"
+  value: { string_value: "16" }
+}

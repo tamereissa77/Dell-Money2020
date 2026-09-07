@@ -1,0 +1,14 @@
+# --- data: 2.5 GB, regenerate with `make fraud-data && make fraud-preprocess` ---
+*/data/
+# --- python virtualenvs: absolute paths in shebangs, never portable ---
+*/.venv/
+.venv/
+# --- GPU JIT cache: machine-specific, regenerate with `make <demo>-prewarm` ---
+*/cache/
+# --- build/scratch ---
+**/__pycache__/
+*/deck/preview/
+*.pyc
+*.log
+*.bak
+*.tgz
