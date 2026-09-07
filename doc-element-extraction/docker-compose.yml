@@ -85,7 +85,7 @@ services:
     image: postgres:16-alpine
     container_name: ${CONTAINER_PREFIX}-extraction-postgres
     ports:
-      - "${PORT_POSTGRES:-5432}:5432"
+      - "127.0.0.1:${PORT_POSTGRES:-5432}:5432"
     environment:
       - POSTGRES_USER=extract_user
       - POSTGRES_PASSWORD=extract_pass
@@ -109,7 +109,7 @@ services:
     image: dpage/pgadmin4
     container_name: ${CONTAINER_PREFIX}-extraction-pgadmin
     ports:
-      - "${PORT_PGADMIN:-80}:80"
+      - "127.0.0.1:${PORT_PGADMIN:-80}:80"
     environment:
       - PGADMIN_DEFAULT_EMAIL=admin@extraction.com
       - PGADMIN_DEFAULT_PASSWORD=admin
@@ -130,7 +130,7 @@ services:
     image: arangodb:latest
     container_name: ${CONTAINER_PREFIX}-extraction-arangodb
     ports:
-      - "${PORT_ARANGO:-8529}:8529"
+      - "127.0.0.1:${PORT_ARANGO:-8529}:8529"
     environment:
       - ARANGO_NO_AUTH=1
     volumes:
@@ -175,7 +175,7 @@ services:
       dockerfile: Dockerfile
     container_name: ${CONTAINER_PREFIX}-extraction-ollama
     ports:
-      - "${PORT_OLLAMA:-11434}:11434" # Changed from 11434
+      - "127.0.0.1:${PORT_OLLAMA:-11434}:11434" # Changed from 11434
     volumes:
       - ollama_data:/root/.ollama
     environment:
@@ -210,7 +210,7 @@ services:
     image: qdrant/qdrant:latest
     container_name: ${CONTAINER_PREFIX}-extraction-qdrant
     ports:
-      - "${PORT_QDRANT:-6333}:6333" # Changed from 6333
+      - "127.0.0.1:${PORT_QDRANT:-6333}:6333" # Changed from 6333
     volumes:
       - qdrant_data:/qdrant/storage
     networks:
@@ -246,8 +246,8 @@ services:
     image: minio/minio:latest
     container_name: extraction-minio
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     environment:
       - MINIO_ROOT_USER=minioadmin
       - MINIO_ROOT_PASSWORD=minioadmin
@@ -272,7 +272,7 @@ services:
       dockerfile: Dockerfile
     container_name: ${CONTAINER_PREFIX}-extraction-embeddings
     ports:
-      - "${PORT_TRANSFORMERS:-8000}:80" # Changed from 8000:80
+      - "127.0.0.1:${PORT_TRANSFORMERS:-8000}:80" # Changed from 8000:80
     environment:
       - MODEL_NAME=all-MiniLM-L6-v2
     networks:
@@ -327,7 +327,7 @@ services:
       dockerfile: Dockerfile
     container_name: ${CONTAINER_PREFIX}-extraction-retrieval
     ports:
-      - "${PORT_RETRIEVAL:-8100}:8100"
+      - "127.0.0.1:${PORT_RETRIEVAL:-8100}:8100"
     environment:
       - OLLAMA_BASE_URL=http://ollama:${PORT_OLLAMA:-11434}
       - POSTGRES_HOST=postgres

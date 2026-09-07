@@ -102,7 +102,10 @@ short name: `echo mydemo > mydemo/.alias`
 
 `doc-element-extraction` originates from [iPulse-AI](https://github.com/iPulse-AI) and is included
 here under a partnership agreement between Dell Technologies and iPulse-AI. Its service credentials
-are development defaults; change them before any deployment beyond a demo.
+are development defaults, so its databases, object store and LLM runtime are bound to
+`127.0.0.1` only — reachable on the machine itself but not over the network. Only the two
+UI ports (Streamlit `9501`, Knowledge Graph `9101`) are exposed. Change the credentials
+before any deployment beyond a demo.
 
 ## Trademarks
 
