@@ -1,0 +1,139 @@
+services:
+  # ─── Pipeline 1: National ID Extraction ────────────────────────
+  national_id_service:
+    build: ./national_id_service
+    ports:
+      - "8010:8010"
+    volumes:
+      - ./shared_data:/shared_data
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # ─── Pipeline 2: HR Letter Extraction + Signature ──────────────
+  hr_letter_service:
+    build: ./hr_letter_service
+    ports:
+      - "8011:8011"
+    volumes:
+      - ./shared_data:/shared_data
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # ─── Pipeline 3: Loan Form (Google Sheets + Manual) ────────────
+  form_service:
+    build: ./form_service
+    ports:
+      - "8012:8012"
+    volumes:
+      - ./shared_data:/shared_data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GOOGLE_SHEET_ID=${GOOGLE_SHEET_ID:-}
+      - GOOGLE_CREDENTIALS_PATH=/shared_data/service_account.json
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # ─── Orchestrator: Merge + Validate ────────────────────────────
+  orchestrator:
+    build: ./orchestrator_service
+    ports:
+      - "8013:8013"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - NATIONAL_ID_SERVICE_URL=http://national_id_service:8010
+      - HR_LETTER_SERVICE_URL=http://hr_letter_service:8011
+      - FORM_SERVICE_URL=http://form_service:8012
+    env_file:
+      - .env
+    depends_on:
+      - national_id_service
+      - hr_letter_service
+      - form_service
+    restart: unless-stopped
+
+  # ─── Utility: HR Document Generator ───────────────────────────
+  generator:
+    build: ./generator_service
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./shared_data:/shared_data
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  # ─── Pipeline 4: NBE Extractor Service (EasyOCR + VLM + OpenCV Boxes) ────
+  extractor_service:
+    build: ./extractor_service
+    ports:
+      - "8014:8014"
+    volumes:
+      - ./shared_data:/shared_data
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  # ─── Vision API: Fine-tuned Qwen2.5-VL-7B (GPU) ───────────────────────────
+  # Build context is ./nbe_finetune so local_llm_client.py is accessible
+  # The fine-tuned checkpoint is mounted from the host; NOT baked into the image.
+  vision_api:
+    build:
+      context: ./nbe_finetune
+      dockerfile: demo/Dockerfile
+    ports:
+      - "8005:8005"
+    volumes:
+      # Mount the fine-tuned model checkpoint (stays on host)
+      - ./nbe_finetune/output:/app/output:ro
+      # Mount shared data for any sample images
+      - ./shared_data:/shared_data:ro
+      # WSL2 native ext4 HF cache — same speed as running locally
+      - ${HF_CACHE:-./hf-cache}:/root/.cache/huggingface
+    environment:
+      - PYTHONUNBUFFERED=1
+      - VISION_API_PORT=8005
+      - HOST=0.0.0.0
+    env_file:
+      - .env
+    # ── GPU passthrough (requires nvidia-container-runtime on the WSL host) ──
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # ─── Frontend: Egyptian Loan Processing Web Portal ────────────
+  loan_portal:
+    build: ./loan_processing
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./shared_data:/shared_data:ro
+      - ./data:/data:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HOST=0.0.0.0
+      - PORT=5050
+      - QWEN_API_URL=http://vision_api:8005
+      - VISION_API_URL=http://vision_api:8005
+      - HF_TOKEN=${HF_TOKEN:-}
+    env_file:
+      - .env
+    depends_on:
+      - orchestrator
+      - extractor_service
+      - vision_api
+    restart: unless-stopped
+

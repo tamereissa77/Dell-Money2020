@@ -1,0 +1,14 @@
+# secrets — copy .env.example to .env and supply your own keys
+.env
+# partner-supplied model weights (large, licensed separately)
+models/
+weights/
+*.safetensors
+*.bin
+**/__pycache__/
+*.pyc
+data/
+uploads/
+
+# HuggingFace model cache (16GB, fetched separately)
+hf-cache/

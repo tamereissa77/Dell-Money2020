@@ -1,0 +1,5 @@
+- Pin Qwen2.5-VL revision: `transformers==4.49.0` which ships `Qwen2.5-VL-7B-Instruct` model ID.
+- Flash Attention 2 wheels are available for `torch==2.7.1+cu128`; `flash-attn==2.7.4.post1` provides compatible binaries.
+- VRAM budget for 32 GB tier (approx.): model BF16 ≈ 14 GB, activations ≈ 4 GB, gradients ≈ 3 GB, optimizer states ≈ 2 GB, LoRA params (rank 64) ≈ 0.3 GB, leaving ~8 GB headroom.
+- Verify loss masking by inspecting the first batch's `labels` tensor: ensure tokens belonging to the system and user prompts are `-100` while the assistant JSON tokens retain their token IDs.
+- To resume after interruption, run `python train.py --resume_from_checkpoint output/checkpoints/best/` (the script detects `--resume_from_checkpoint` argument and loads the LoRA adapter and optimizer state).

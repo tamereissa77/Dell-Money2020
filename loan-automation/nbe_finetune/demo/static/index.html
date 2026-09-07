@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen Native Vision | AI Document Extraction</title>
+    <link rel="stylesheet" href="style.css?v=1.1">
+    <style>
+        .container { max-width: 1400px !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
+                </div>
+                <div class="logo-text">
+                    <h1>Native Vision</h1>
+                </div>
+            </div>
+            <p class="subtitle">Next-generation document intelligence powered by Qwen2.5-VL</p>
+        </header>
+
+        <main class="main-grid">
+            <!-- Left Panel: Input -->
+            <section class="card">
+                <div class="result-header">
+                    <h2>Input Document</h2>
+                    <span id="file-info" class="status-badge">Waiting for file...</span>
+                </div>
+                
+                <div id="drop-zone" class="upload-zone">
+                    <span class="upload-icon">📸</span>
+                    <p>Drop document here or click to browse</p>
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.5rem;">Supports JPG, PNG, WEBP</p>
+                    <input type="file" id="file-input" hidden accept="image/*">
+                </div>
+
+                <div id="preview-container">
+                    <img id="image-preview" src="" alt="Preview">
+                    <div style="margin-top: 1.5rem;">
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.5rem;">Document Type</label>
+                        <select id="doc-type" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white; margin-bottom: 1rem; outline: none;">
+                            <option value="id_front">🪪 Egyptian National ID (Front) - بطاقة الرقم القومي (أمامي)</option>
+                            <option value="id_back">🪪 Egyptian National ID (Back) - بطاقة الرقم القومي (خلفي)</option>
+                            <option value="hr_letter">📄 HR Letter / Salary Certificate - خطاب مفردات مرتب</option>
+                            <option value="practice_license">🩺 Practice License - رخصة مزاولة المهنة</option>
+                            <option value="syndicate_card">💳 Syndicate Card - كارنيه النقابة</option>
+                            <option value="clinic_license">🏥 Clinic License - ترخيص العيادة / المركز الطبي</option>
+                            <option value="utility_bill">⚡ Utility Bill - إيصال مرافق (كهرباء / غاز)</option>
+                            <option value="electricity_bill">💡 Electricity Bill - فاتورة كهرباء</option>
+                            <option value="ownership_contract">🏠 Ownership / Lease Contract - عقد ملكية / إيجار</option>
+                            <option value="tax_card">📋 Tax Card - البطاقة الضريبية</option>
+                            <option value="commercial_register">🏛️ Commercial Register - السجل التجاري</option>
+                            <option value="bank_statement">🏦 Bank Statement - كشف حساب بنكي</option>
+                            <option value="pension_transfer_pledge">📜 Pension Transfer Pledge - تعهد بتحويل المعاش</option>
+                            <option value="salary_transfer_pledge">📜 Salary Transfer Pledge - تعهد بتحويل الراتب</option>
+                        </select>
+                    </div>
+                    <button id="extract-btn" class="btn-primary" disabled>Start Extraction</button>
+                </div>
+            </section>
+
+            <!-- Right Panel: Results -->
+            <section class="card">
+                <div class="result-header">
+                    <h2>Extracted Data</h2>
+                    <div id="status-container" class="status-badge">Idle</div>
+                </div>
+
+                <div id="results-placeholder" style="text-align: center; padding: 4rem 0; color: var(--text-dim);">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem; opacity: 0.3;"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h10"/><path d="M7 12h10"/><path d="M7 17h10"/></svg>
+                    <p>Results will appear here after processing</p>
+                </div>
+
+                <div id="results-content" style="display: none;">
+                    <div id="data-display" class="data-grid">
+                        <!-- Data items will be injected here -->
+                    </div>
+                    
+                    <div style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="font-size: 0.8rem; color: var(--text-dim);">Raw JSON Output</span>
+                            <button id="toggle-json" style="background: none; border: none; color: var(--accent-primary); font-size: 0.8rem; cursor: pointer;">Show JSON</button>
+                        </div>
+                        <pre id="json-output" class="json-view"></pre>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

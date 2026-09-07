@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>نظام معالجة القروض الذكي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
+    <style>
+        :root {
+            --primary: #006633;
+            --primary-dark: #004d26;
+            --secondary: #c5a059;
+            --accent: #f37021;
+            --dark: #0a2a1b;
+            --light: #f8fafc;
+            --white: #ffffff;
+            --glass: rgba(255, 255, 255, 0.9);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 15px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 30px rgba(0,0,0,0.15);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #f0f4f2 0%, #e8efec 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            direction: rtl;
+            line-height: 1.6;
+        }
+
+        /* ── HEADER ── */
+        header {
+            background: var(--white);
+            box-shadow: var(--shadow-md);
+            padding: 1rem 5%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 3px solid var(--secondary);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .logo-container {
+            width: 180px;
+            height: auto;
+            transition: var(--transition);
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .header-text h1 {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: -2px;
+        }
+
+        .header-text p {
+            font-size: 0.8rem;
+            color: var(--secondary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── STEPS BAR ── */
+        .steps-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .steps-bar {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .steps-bar::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #e2e8f0;
+            z-index: 0;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-circle {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            background: var(--white);
+            border: 3px solid #e2e8f0;
+            color: #94a3b8;
+            transition: var(--transition);
+        }
+
+        .step.active .step-circle {
+            background: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 102, 51, 0.3);
+            transform: scale(1.1);
+        }
+
+        .step.done .step-circle {
+            background: var(--secondary);
+            color: var(--white);
+            border-color: var(--secondary);
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 0.75rem;
+            font-weight: 700;
+            transition: var(--transition);
+        }
+
+        .step.active .step-label {
+            color: var(--primary);
+            font-weight: 800;
+        }
+
+        /* ── MAIN CONTAINER ── */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 1.5rem 4rem;
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 2rem;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card h2 {
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card h2 .icon {
+            background: #eef7f2;
+            padding: 0.5rem;
+            border-radius: 12px;
+            color: var(--primary);
+        }
+
+        .card .sub {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        /* ── LOAN GRID ── */
+        .loan-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .loan-card {
+            background: var(--white);
+            border: 2px solid #f1f5f9;
+            border-radius: 20px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .loan-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .loan-card.selected {
+            border-color: var(--primary);
+            background: #eef7f2;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        .loan-card .lc-icon {
+            font-size: 3rem;
+            transition: var(--transition);
+        }
+
+        .loan-card .lc-name {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        /* ── DOCS LIST ── */
+        .doc-item {
+            background: var(--white);
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        .doc-item:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .doc-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.25rem;
+        }
+
+        .doc-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #eef7f2;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+        }
+
+        .doc-info {
+            flex: 1;
+        }
+
+        .doc-name {
+            font-weight: 800;
+            font-size: 1.05rem;
+        }
+
+        .doc-cond {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .doc-toggle {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .doc-upload {
+            padding: 0 1.25rem 1.25rem;
+            display: none;
+        }
+
+        /* ── FORM ── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .form-group input, .form-group select {
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(0, 102, 51, 0.1);
+        }
+
+        /* ── BUTTONS ── */
+        .btn-row {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border-radius: 14px;
+            font-weight: 900;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+            box-shadow: 0 4px 15px rgba(0, 102, 51, 0.2);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 102, 51, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .btn-outline {
+            background: var(--white);
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: #eef7f2;
+        }
+
+        /* ── RESULT ── */
+        .result-card {
+            border-radius: 24px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            animation: slideUp 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-card.approve { background: #ecfdf5; border: 2px solid #10b981; }
+        .result-card.reject { background: #fef2f2; border: 2px solid #ef4444; }
+        .result-card.manual { background: #fffbeb; border: 2px solid #f59e0b; }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .result-icon {
+            font-size: 4rem;
+        }
+
+        .result-title {
+            font-size: 2rem;
+            font-weight: 900;
+        }
+
+        .score-display {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .score-value {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--primary);
+        }
+
+        .score-label {
+            font-weight: 700;
+            color: #64748b;
+        }
+
+        /* ── VALIDATION ALERTS ── */
+        .validation-alerts {
+            margin-bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .validation-alert-item {
+            background: #fff5f5;
+            border-right: 5px solid #ef4444;
+            border-left: none;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 4px 6px rgba(239, 68, 68, 0.05);
+            animation: pulseAlert 2.5s infinite ease-in-out;
+        }
+
+        @keyframes pulseAlert {
+            0% { border-color: #ef4444; background: #fff5f5; }
+            50% { border-color: #fda4af; background: #fff8f8; }
+            100% { border-color: #ef4444; background: #fff5f5; }
+        }
+
+        .validation-alert-icon {
+            font-size: 1.5rem;
+            animation: bounceAlert 1s infinite alternate;
+        }
+
+        @keyframes bounceAlert {
+            from { transform: translateY(0); }
+            to { transform: translateY(-2px); }
+        }
+
+        .validation-alert-text {
+            font-weight: 800;
+            color: #991b1b;
+            font-size: 1.05rem;
+        }
+
+        /* ── LOADING ── */
+        .spinner-wrap {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5rem 0;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 80px;
+            height: 80px;
+            border: 8px solid #eef7f2;
+            border-top: 8px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            margin-bottom: 2rem;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <div class="header-text">
+            <h1>نظام معالجة القروض الذكي</h1>
+            <p>نظام المعالجة والتقييم الآلي لطلبات القروض</p>
+        </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <a href="http://127.0.0.1:8000" target="_blank" style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #006633, #004d26); color: white; padding: 0.5rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(0,102,51,0.25); transition: all 0.3s ease;">
+            <span>🔬 أداة اختبار الاستخراج المباشر (Port 8000)</span>
+        </a>
+        <div style="font-weight: 800; color: var(--primary); opacity: 0.5;">
+            Smart Loan Portal
+        </div>
+    </div>
+</header>
+
+<div class="steps-container">
+    <div class="steps-bar" id="stepsBar">
+        <div class="step active" id="s1">
+            <div class="step-circle">١</div>
+            <div class="step-label">نوع القرض</div>
+        </div>
+        <div class="step" id="s2">
+            <div class="step-circle">٢</div>
+            <div class="step-label">المستندات</div>
+        </div>
+        <div class="step" id="s3">
+            <div class="step-circle">٣</div>
+            <div class="step-label">البيانات</div>
+        </div>
+        <div class="step" id="s4">
+            <div class="step-circle">٤</div>
+            <div class="step-label">القرار</div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- STEP 1: Loan Type -->
+    <div class="card" id="step1">
+        <h2><span class="icon">📋</span> اختر نوع القرض</h2>
+        <p class="sub">نحن هنا لمساعدتك في اختيار التمويل الأمثل لاحتياجاتك</p>
+        <div class="loan-grid" id="loanGrid">
+            <div style="color:#94a3b8; font-weight: 700;">جارٍ تحميل أنواع القروض...</div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-primary" id="btn1" disabled onclick="goStep2()">التالي &larr;</button>
+        </div>
+    </div>
+
+    <!-- STEP 2: Documents -->
+    <div class="card hidden" id="step2">
+        <h2><span class="icon">📁</span> المستندات المطلوبة</h2>
+        <p class="sub">يرجى رفع المستندات التالية بصيغة صور واضحة</p>
+        <div id="docsList"></div>
+        <div class="btn-row">
+            <button class="btn btn-outline" onclick="goStep1()">&rarr; السابق</button>
+            <button class="btn btn-primary" id="btnStep2Next" onclick="goStep3()" disabled>التالي &larr;</button>
+        </div>
+    </div>
+
+    <!-- STEP 3: Client Data -->
+    <div class="card hidden" id="step3">
+        <h2><span class="icon">👤</span> بيانات العميل</h2>
+        <p class="sub">يرجى التأكد من دقة البيانات المدخلة</p>
+        <div class="form-grid">
+            <div class="form-group"><label>الأسم بالكامل</label><input id="f_name" placeholder="أدخل اسمك كما هو في البطاقة"/></div>
+            <div class="form-group"><label>الرقم القومي</label><input id="f_national_id" placeholder="١٤ رقم"/></div>
+            <div class="form-group"><label>النوع</label><select id="f_gender"><option value="">اختر</option><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select></div>
+            <div class="form-group"><label>الحالة الأجتماعية</label><select id="f_marital_status"><option value="">اختر</option><option value="أعزب">أعزب / آنسة</option><option value="متزوج">متزوج / متزوجة</option></select></div>
+            <div class="form-group" style="grid-column: 1 / -1;"><label>العنوان</label><input id="f_address" placeholder="العنوان الحالي بالتفصيل"/></div>
+            <div class="form-group"><label>رقم الهاتف</label><input id="f_phone" placeholder="01XXXXXXXXX"/></div>
+            <div class="form-group"><label>الوظيفة</label><input id="f_job_title" placeholder="المسمى الوظيفي الحالي"/></div>
+            <div class="form-group"><label>الدخل الشهري</label><input id="f_income" type="number" placeholder="بالجنيه المصري"/></div>
+            <div class="form-group"><label>رقم الحساب</label><input id="f_bank_account" placeholder="اختياري إذا كان لديك حساب"/></div>
+            <div class="form-group"><label>مبلغ القرض المطلوب</label><input id="f_amount" type="number" placeholder="بالجنيه المصري"/></div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-outline" onclick="goStep2()">&rarr; السابق</button>
+            <button class="btn btn-primary" id="btnSubmit" onclick="submitLoan()" disabled>🚀 إرسال الطلب للتحليل</button>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="spinner-wrap" id="spinner">
+        <div class="spinner"></div>
+        <h3>جارٍ تحليل المستندات والبيانات...</h3>
+        <p style="color: #64748b; margin-top: 1rem;">نستخدم تقنيات الذكاء الاصطناعي لضمان معالجة فورية لطلبك</p>
+    </div>
+
+    <!-- STEP 4: Result -->
+    <div class="hidden" id="step4"></div>
+
+</div>
+
+<script>
+    let selectedLoan = null;
+    let loanTypes = [];
+
+    // Load loan types
+    fetch('/api/loan-types').then(r=>r.json()).then(data=>{
+        loanTypes = data;
+        const icons = {
+            'car':'🚗',
+            'personal_default_income':'💼',
+            'personal_doctors':'🩺',
+            'personal_pension':'👴',
+            'personal_freelance':'🧑‍💻',
+            'personal_salary_secured':'🏢',
+            'personal_salary_unsecured':'📄'
+        };
+        const grid = document.getElementById('loanGrid');
+        grid.innerHTML = '';
+        data.forEach(lt=>{
+            const div = document.createElement('div');
+            div.className='loan-card';
+            div.innerHTML=`<div class="lc-icon">${icons[lt.key]||'🏦'}</div><div class="lc-name">${lt.display}</div>`;
+            div.onclick=()=>selectLoan(lt.key, div);
+            grid.appendChild(div);
+        });
+    });
+
+    function selectLoan(key, el){
+        selectedLoan = key;
+        document.querySelectorAll('.loan-card').forEach(c=>c.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('btn1').disabled=false;
+    }
+
+    function setStep(n){
+        [1,2,3,4].forEach(i=>{
+            const el = document.getElementById('step'+i);
+            if(el) el.classList.toggle('hidden', i!==n);
+        });
+        document.getElementById('spinner').style.display='none';
+        [1,2,3,4].forEach(i=>{
+            const s=document.getElementById('s'+i);
+            if(!s) return;
+            s.classList.remove('active','done');
+            if(i<n) s.classList.add('done');
+            if(i===n) s.classList.add('active');
+        });
+    }
+
+    function goStep1(){ setStep(1); }
+    function goStep2(){
+        if(!selectedLoan) return;
+        const lt = loanTypes.find(l=>l.key===selectedLoan);
+        const list = document.getElementById('docsList');
+        list.innerHTML='';
+        lt.docs.forEach((doc,i)=>{
+            const isID = doc.key === 'national_id';
+            const uploadHtml = isID ? `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                    <div>
+                        <label style="font-size: 0.8rem; font-weight: 800; display: block; margin-bottom: 0.5rem;">البطاقة (الوجه الأمامي)</label>
+                        <input type="file" id="df_${doc.key}_front" accept="image/*" onchange="handleFileSelectSplit('${doc.key}', 'front')" />
+                        <div id="dp_${doc.key}_front" style="display:none; margin-top: 0.5rem;"><img id="img_${doc.key}_front" style="width:100%; border-radius:12px;"></div>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; font-weight: 800; display: block; margin-bottom: 0.5rem;">البطاقة (الوجه الخلفي)</label>
+                        <input type="file" id="df_${doc.key}_back" accept="image/*" onchange="handleFileSelectSplit('${doc.key}', 'back')" />
+                        <div id="dp_${doc.key}_back" style="display:none; margin-top: 0.5rem;"><img id="img_${doc.key}_back" style="width:100%; border-radius:12px;"></div>
+                    </div>
+                </div>
+                <input type="hidden" id="dt_${doc.key}_front" />
+                <input type="hidden" id="dt_${doc.key}_back" />
+            ` : `
+                <div style="margin-top: 1rem;">
+                    <input type="file" id="df_${doc.key}" accept="image/*" onchange="handleFileSelect('${doc.key}')" />
+                    <div id="dp_${doc.key}" style="display:none; margin-top: 0.5rem;"><img id="img_${doc.key}" style="max-height: 200px; border-radius:12px;"></div>
+                </div>
+                <input type="hidden" id="dt_${doc.key}" />
+            `;
+
+            list.innerHTML+=`
+                <div class="doc-item" id="di_${doc.key}">
+                    <div class="doc-header">
+                        <div class="doc-num">${i+1}</div>
+                        <div class="doc-info">
+                            <div class="doc-name">${doc.display}</div>
+                            <div class="doc-cond">${doc.condition}</div>
+                            <span class="doc-toggle" onclick="toggleDoc('${doc.key}')">📎 رفع المستند</span>
+                        </div>
+                        <div class="doc-status" id="ds_${doc.key}"></div>
+                    </div>
+                    <div class="doc-upload" id="du_${doc.key}">
+                        ${uploadHtml}
+                    </div>
+                </div>`;
+        });
+        setStep(2);
+        checkDocs(); // Initialize button state
+    }
+
+    function checkDocs() {
+        if(!selectedLoan) return;
+        const lt = loanTypes.find(l=>l.key===selectedLoan);
+        let allUploaded = true;
+        
+        lt.docs.forEach((doc) => {
+            const isID = doc.key === 'national_id';
+            if (isID) {
+                const front = document.getElementById('dt_'+doc.key+'_front')?.value;
+                const back = document.getElementById('dt_'+doc.key+'_back')?.value;
+                if (!front || !back) allUploaded = false;
+            } else {
+                const val = document.getElementById('dt_'+doc.key)?.value;
+                if (!val) allUploaded = false;
+            }
+        });
+        
+        document.getElementById('btnStep2Next').disabled = !allUploaded;
+    }
+
+    let sampleDocsData = {};
+    fetch('/api/sample-docs').then(r=>r.json()).then(data=>{ sampleDocsData = data; });
+
+    function autoFillDemoDocs() {
+        if(!selectedLoan) return;
+        const lt = loanTypes.find(l=>l.key===selectedLoan);
+        if(!lt || !lt.docs) return;
+
+        lt.docs.forEach(doc => {
+            if(doc.key === 'national_id') {
+                const frontSrc = sampleDocsData['national_id_front'];
+                const backSrc = sampleDocsData['national_id_back'];
+                if(frontSrc) setDocImageSplit('national_id', 'front', frontSrc);
+                if(backSrc) setDocImageSplit('national_id', 'back', backSrc);
+            } else {
+                const src = sampleDocsData[doc.key] || sampleDocsData['utility_bill'];
+                if(src) setDocImage(doc.key, src);
+            }
+        });
+        checkDocs();
+    }
+
+    function useDemoDoc(key, side = null) {
+        if(side) {
+            const fullKey = 'national_id_' + side;
+            const src = sampleDocsData[fullKey];
+            if(src) setDocImageSplit(key, side, src);
+        } else {
+            const src = sampleDocsData[key] || sampleDocsData['utility_bill'];
+            if(src) setDocImage(key, src);
+        }
+        checkDocs();
+    }
+
+    function setDocImage(key, dataUrl) {
+        userUploadedFiles[key] = dataUrl;
+        const hiddenInput = document.getElementById('dt_'+key);
+        const previewDiv = document.getElementById('dp_'+key);
+        const imgElement = document.getElementById('img_'+key);
+        const di = document.getElementById('di_'+key);
+        const tog = di ? di.querySelector('.doc-toggle') : null;
+
+        if(hiddenInput) hiddenInput.value = dataUrl;
+        if(imgElement) imgElement.src = dataUrl;
+        if(previewDiv) previewDiv.style.display = 'block';
+        if(di) di.classList.add('has-content');
+        if(tog) { tog.innerHTML='✅ تم الرفع'; tog.style.color='#10b981'; }
+    }
+
+    function setDocImageSplit(key, side, dataUrl) {
+        if(!userUploadedFiles[key] || typeof userUploadedFiles[key] !== 'object') {
+            userUploadedFiles[key] = {};
+        }
+        userUploadedFiles[key][side] = dataUrl;
+
+        const hiddenInput = document.getElementById('dt_'+key+'_'+side);
+        const previewDiv = document.getElementById('dp_'+key+'_'+side);
+        const imgElement = document.getElementById('img_'+key+'_'+side);
+        const di = document.getElementById('di_'+key);
+        const tog = di ? di.querySelector('.doc-toggle') : null;
+
+        if(hiddenInput) hiddenInput.value = dataUrl;
+        if(imgElement) imgElement.src = dataUrl;
+        if(previewDiv) previewDiv.style.display = 'block';
+
+        const front = userUploadedFiles[key]?.front || document.getElementById('dt_'+key+'_front')?.value;
+        const back = userUploadedFiles[key]?.back || document.getElementById('dt_'+key+'_back')?.value;
+        if (front && back && di && tog) {
+            di.classList.add('has-content');
+            tog.innerHTML='✅ تم الرفع';
+            tog.style.color='#10b981';
+        }
+    }
+
+    function toggleDoc(key){
+        const up = document.getElementById('du_'+key);
+        up.style.display = up.style.display==='block' ? 'none' : 'block';
+    }
+
+    const userUploadedFiles = {};
+
+    function handleFileSelect(key){
+        const fileInput = document.getElementById('df_'+key);
+        const hiddenInput = document.getElementById('dt_'+key);
+        const previewDiv = document.getElementById('dp_'+key);
+        const imgElement = document.getElementById('img_'+key);
+        const di = document.getElementById('di_'+key);
+        const tog = di ? di.querySelector('.doc-toggle') : null;
+
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                userUploadedFiles[key] = e.target.result;
+                if(hiddenInput) hiddenInput.value = e.target.result;
+                if(imgElement) imgElement.src = e.target.result;
+                if(previewDiv) previewDiv.style.display = 'block';
+                if(di) di.classList.add('has-content');
+                if(tog) { tog.innerHTML='✅ تم الرفع'; tog.style.color='#10b981'; }
+                checkDocs();
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+    }
+
+    function handleFileSelectSplit(key, side){
+        const fileInput = document.getElementById('df_'+key+'_'+side);
+        const hiddenInput = document.getElementById('dt_'+key+'_'+side);
+        const previewDiv = document.getElementById('dp_'+key+'_'+side);
+        const imgElement = document.getElementById('img_'+key+'_'+side);
+        const di = document.getElementById('di_'+key);
+        const tog = di ? di.querySelector('.doc-toggle') : null;
+
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if(!userUploadedFiles[key] || typeof userUploadedFiles[key] !== 'object') {
+                    userUploadedFiles[key] = {};
+                }
+                userUploadedFiles[key][side] = e.target.result;
+
+                if(hiddenInput) hiddenInput.value = e.target.result;
+                if(imgElement) imgElement.src = e.target.result;
+                if(previewDiv) previewDiv.style.display = 'block';
+                
+                const front = userUploadedFiles[key]?.front || document.getElementById('dt_'+key+'_front')?.value;
+                const back = userUploadedFiles[key]?.back || document.getElementById('dt_'+key+'_back')?.value;
+                if (front && back && di && tog) {
+                    di.classList.add('has-content');
+                    tog.innerHTML='✅ تم الرفع';
+                    tog.style.color='#10b981';
+                }
+                checkDocs();
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+    }
+
+    function goStep3(){ 
+        setStep(3); 
+        checkForm(); // Trigger validation on load
+    }
+
+    function checkForm() {
+        const requiredIds = [
+            'f_name', 'f_national_id', 'f_gender', 'f_marital_status', 
+            'f_address', 'f_phone', 'f_job_title', 'f_income', 'f_amount'
+        ];
+        let isValid = true;
+        requiredIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el || !el.value || el.value.trim() === '') {
+                isValid = false;
+            }
+        });
+        document.getElementById('btnSubmit').disabled = !isValid;
+    }
+
+    // Add event listeners to all form inputs to validate on type/change
+    document.addEventListener("DOMContentLoaded", () => {
+        const inputs = document.querySelectorAll('#step3 input, #step3 select');
+        inputs.forEach(input => {
+            input.addEventListener('input', checkForm);
+            input.addEventListener('change', checkForm);
+        });
+    });
+
+    function submitLoan(){
+        const lt = loanTypes.find(l=>l.key===selectedLoan);
+        const uploaded={};
+        if (lt && lt.docs) {
+            lt.docs.forEach(doc=>{
+                if (doc.key === 'national_id') {
+                    const front = userUploadedFiles['national_id']?.front || document.getElementById('dt_'+doc.key+'_front')?.value;
+                    const back = userUploadedFiles['national_id']?.back || document.getElementById('dt_'+doc.key+'_back')?.value;
+                    if(front || back) uploaded[doc.key] = [front, back].filter(Boolean);
+                } else {
+                    const val = userUploadedFiles[doc.key] || document.getElementById('dt_'+doc.key)?.value;
+                    if(val) uploaded[doc.key] = val;
+                }
+            });
+        }
+
+        const form_data={
+            full_name: document.getElementById('f_name').value,
+            national_id: document.getElementById('f_national_id').value,
+            gender: document.getElementById('f_gender').value,
+            marital_status: document.getElementById('f_marital_status').value,
+            address: document.getElementById('f_address').value,
+            phone: document.getElementById('f_phone').value,
+            job_title: document.getElementById('f_job_title').value,
+            monthly_income: document.getElementById('f_income').value,
+            bank_account_number: document.getElementById('f_bank_account').value,
+            requested_amount: document.getElementById('f_amount').value,
+        };
+
+        document.getElementById('step3').classList.add('hidden');
+        document.getElementById('spinner').style.display='flex';
+        [1,2,3,4].forEach(i=>{
+            const s=document.getElementById('s'+i);
+            if(s) s.classList.remove('active','done');
+        });
+        document.getElementById('s4').classList.add('active');
+
+        fetch('/api/process',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({loan_type:selectedLoan, uploaded_docs:uploaded, form_data})
+        })
+        .then(r=>r.json())
+        .then(res=>{
+            document.getElementById('spinner').style.display='none';
+            showResult(res);
+        })
+        .catch(err=>{
+            console.error(err);
+            alert("حدث خطأ في النظام: " + err.message);
+            document.getElementById('spinner').style.display='none';
+            showError(err);
+        });
+    }
+
+    function showResult(res){
+        if(res.error){ showError(res.error); return; }
+        const decision = res.final_decision || 'reject';
+        const score = res.satisfaction_score || 0;
+        const valMap = res.validation_results || {};
+        const missing = res.missing_docs || [];
+
+        const config = {
+            'approve': { icon:'✅', title:'تمت الموافقة', cls:'approve' },
+            'manual_review': { icon:'⚠️', title:'مراجعة يدوية', cls:'manual' },
+            'reject': { icon:'❌', title:'نأسف، الطلب مرفوض', cls:'reject' }
+        }[decision];
+
+        // --- DISCREPANCY DETECTION LOGIC ---
+        let issues = res.reasons || [];
+        let hasLimitIssue = issues.includes("الطلب مرفوض لتجاوز المبلغ المطلوب الحد الاقصى المتاح للاقتراض");
+
+        if (hasLimitIssue) {
+            if (config && config.cls === 'reject') {
+                config.title = "الطلب مرفوض لتجاوز المبلغ المطلوب الحد الاقصى المتاح للاقتراض";
+            }
+        }
+
+        let alertsHtml = '';
+        if (issues.length > 0) {
+            alertsHtml = '<div class="validation-alerts">';
+            issues.forEach(issue => {
+                alertsHtml += `
+                    <div class="validation-alert-item">
+                        <div class="validation-alert-icon">🚨</div>
+                        <div class="validation-alert-text">${issue}</div>
+                    </div>
+                `;
+            });
+            alertsHtml += '</div>';
+        }
+
+        const docNames = {
+            'national_id': 'بطاقة الرقم القومي (National ID)',
+            'hr_letter': 'خطاب مفردات المرتب (HR Letter)',
+            'practice_license': 'رخصة مزاولة المهنة',
+            'syndicate_card': 'كارنيه النقابة',
+            'clinic_license': 'ترخيص العيادة / المركز الطبي',
+            'utility_bill': 'إيصال مرافق (كهرباء / غاز / مياه)',
+            'electricity_bill': 'فاتورة كهرباء',
+            'ownership_contract': 'عقد ملكية أو إيجار',
+            'tax_card': 'البطاقة الضريبية',
+            'commercial_register': 'السجل التجاري',
+            'bank_statement': 'كشف حساب بنكي',
+            'pension_transfer_pledge': 'تعهد بتحويل المعاش',
+            'salary_transfer_pledge': 'تعهد بتحويل الراتب'
+        };
+
+        let detailsHtml = '';
+        for(const [name, info] of Object.entries(valMap)){
+            const displayTitle = docNames[name] || name;
+            const pct = Math.round((info.overall_score !== undefined ? info.overall_score : info.score || 0)*100);
+            const barColor = pct >= 75 ? '#10b981' : (pct > 0 ? '#f59e0b' : '#ef4444');
+            
+            let bulletsHtml = '';
+            if (info.reasons && info.reasons.length > 0) {
+                bulletsHtml = '<div style="margin-top: 0.75rem; background: #f8fafc; padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid #e2e8f0;"><ul style="padding-right: 1.25rem; color: #334155; font-size: 0.95rem; font-weight: 700; list-style-type: none;">';
+                info.reasons.forEach(reason => {
+                    let icon = (reason.includes('اختلاف') || reason.includes('خطأ') || reason.includes('ناقصة') || reason.includes('غير المفعول') || reason.includes('مرفوض')) ? '❌ ' : (reason.includes('بنجاح') ? '✅ ' : '🔸 ');
+                    bulletsHtml += `<li style="margin-bottom: 0.4rem; line-height: 1.5;">${icon}${reason}</li>`;
+                });
+                bulletsHtml += '</ul></div>';
+            }
+
+            detailsHtml += `
+                <div style="margin-bottom:1.75rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-weight:800; font-size: 1.05rem;">
+                        <span>📄 ${displayTitle}</span>
+                        <span style="color:${barColor}">${pct}%</span>
+                    </div>
+                    <div style="height:12px; background:#e2e8f0; border-radius:6px; overflow:hidden;">
+                        <div style="height:100%; background:${barColor}; width:0%; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);" data-pct="${pct}%"></div>
+                    </div>
+                    ${bulletsHtml}
+                </div>`;
+        }
+
+        const s4 = document.getElementById('step4');
+        s4.innerHTML = `
+            <div class="result-card ${config.cls}">
+                <div class="result-header">
+                    <div class="result-icon">${config.icon}</div>
+                    <div>
+                        <div class="result-title">${config.title}</div>
+                        <p style="color:#64748b; font-weight:700;">شكراً لاستخدامكم نظام معالجة القروض</p>
+                    </div>
+                </div>
+                ${alertsHtml}
+                <div class="score-display">
+                    <div class="score-label">درجة استيفاء الشروط الإجمالية</div>
+                    <div class="score-value">${Math.round(score*100)}%</div>
+                </div>
+                <div class="card" style="background:var(--white); box-shadow:none; border:1px solid #e2e8f0;">
+                    <h3 style="margin-bottom:1.5rem; color:var(--primary);">تفاصيل التحليل</h3>
+                    ${detailsHtml}
+                </div>
+                ${missing.length ? `<div style="background:#fee2e2; padding:1rem; border-radius:12px; color:#b91c1c; font-weight:700; margin-top:1rem;">⚠️ مستندات مطلوبة: ${missing.join(', ')}</div>` : ''}
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary" onclick="location.reload()">🔄 طلب جديد</button>
+            </div>`;
+        s4.classList.remove('hidden');
+        
+        setTimeout(()=>{
+            s4.querySelectorAll('[data-pct]').forEach(el => el.style.width = el.dataset.pct);
+        }, 100);
+
+        [1,2,3,4].forEach(i=>{
+            const s=document.getElementById('s'+i);
+            if(s) s.classList.add('done');
+        });
+    }
+
+    function showError(err){
+        const s4 = document.getElementById('step4');
+        s4.innerHTML = `
+            <div class="result-card reject">
+                <div class="result-header">
+                    <div class="result-icon">⚠️</div>
+                    <div class="result-title">خطأ في النظام</div>
+                </div>
+                <p>${err}</p>
+            </div>
+            <div class="btn-row"><button class="btn btn-primary" onclick="location.reload()">محاولة أخرى</button></div>`;
+        s4.classList.remove('hidden');
+    }
+</script>
+</body>
+</html>

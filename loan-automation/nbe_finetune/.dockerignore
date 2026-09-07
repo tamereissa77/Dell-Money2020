@@ -1,0 +1,19 @@
+# Ignore training artefacts — the checkpoint is volume-mounted at runtime
+output/
+offload_tmp/
+data/
+
+# Training scripts (not needed in the API image)
+train.py
+evaluate.py
+build_dataset.py
+debug_eval.py
+visual_test.py
+test_single.py
+run_finetune.ps1
+bullet_points.md
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo

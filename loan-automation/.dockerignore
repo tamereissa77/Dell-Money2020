@@ -1,0 +1,53 @@
+# Python artifacts
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache
+**/.mypy_cache
+
+# Virtual environments
+.venv
+venv
+env
+
+# Git
+.git
+.gitattributes
+.gitignore
+
+# IDE / editor
+.vscode
+.idea
+*.code-workspace
+
+# Large data / model outputs (not needed in any service build context)
+dataset/
+dataset_ground_truth.json
+output_layout/
+output_task/
+notebooks/
+archive/
+scratch/
+
+# nbe_finetune training artefacts (heavy — model checkpoint is volume-mounted)
+nbe_finetune/offload_tmp/
+nbe_finetune/output/
+nbe_finetune/data/
+
+# Test files
+test_*.py
+batch_test.py
+bulk_test_50.py
+debug_*.py
+check_crops.py
+run_analysis.py
+nbe_extraction.py
+generate_*.py
+
+# Temp uploads
+temp_uploads/
+
+# Docs
+*.md
+*.docx
