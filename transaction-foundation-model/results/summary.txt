@@ -1,0 +1,63 @@
+
+=== VERDICT: do foundation-model embeddings improve fraud detection? ===
+
+  [04] Extracting embeddings (last_token):  93%|█████████▎| 91/98 [00:43<00:03,  2.07it/s]
+  [04] Extracting embeddings (last_token):  94%|█████████▍| 92/98 [00:43<00:02,  2.08it/s]
+  [04] Extracting embeddings (last_token):  95%|█████████▍| 93/98 [00:44<00:02,  2.07it/s]
+  [04] Extracting embeddings (last_token):  96%|█████████▌| 94/98 [00:44<00:01,  2.07it/s]
+  [04] Extracting embeddings (last_token):  97%|█████████▋| 95/98 [00:45<00:01,  2.07it/s]
+  [04] Extracting embeddings (last_token):  98%|█████████▊| 96/98 [00:45<00:00,  2.08it/s]
+  [04] Extracting embeddings (last_token):  99%|█████████▉| 97/98 [00:46<00:00,  2.07it/s]
+  [04] Extracting embeddings (last_token): 100%|██████████| 98/98 [00:46<00:00,  2.07it/s]
+  [04] Extracting embeddings (last_token): 100%|██████████| 98/98 [00:46<00:00,  2.09it/s]
+  [04] Extracting embeddings (last_token):   1%|          | 1/98 [00:00<00:28,  3.46it/s]
+  [04] Extracting embeddings (last_token):   2%|▏         | 2/98 [00:00<00:25,  3.73it/s]
+  [04] Extracting embeddings (last_token):   3%|▎         | 3/98 [00:01<00:34,  2.75it/s]
+  [04] Extracting embeddings (last_token):   4%|▍         | 4/98 [00:01<00:38,  2.44it/s]
+  [04] Extracting embeddings (last_token):   5%|▌         | 5/98 [00:01<00:40,  2.29it/s]
+  [04] Extracting embeddings (last_token):   7%|▋         | 7/98 [00:02<00:41,  2.17it/s]
+  [04] Extracting embeddings (last_token):   9%|▉         | 9/98 [00:03<00:41,  2.12it/s]
+  [04] Extracting embeddings (last_token):  10%|█         | 10/98 [00:04<00:41,  2.11it/s]
+  [04] Extracting embeddings (last_token):  13%|█▎        | 13/98 [00:05<00:40,  2.09it/s]
+  [04] Extracting embeddings (last_token):  18%|█▊        | 18/98 [00:08<00:38,  2.09it/s]
+  [04] Extracting embeddings (last_token):  19%|█▉        | 19/98 [00:08<00:37,  2.08it/s]
+  [04] Extracting embeddings (last_token):  24%|██▍       | 24/98 [00:11<00:35,  2.08it/s]
+  [04] Extracting embeddings (last_token):  31%|███       | 30/98 [00:13<00:32,  2.08it/s]
+  [04] Extracting embeddings (last_token):  39%|███▉      | 38/98 [00:17<00:28,  2.09it/s]
+  [04] Extracting embeddings (last_token):  40%|███▉      | 39/98 [00:18<00:28,  2.09it/s]
+  [04] Extracting embeddings (last_token):  47%|████▋     | 46/98 [00:21<00:24,  2.08it/s]
+  [04] Extracting embeddings (last_token):  52%|█████▏    | 51/98 [00:24<00:22,  2.08it/s]
+  [04] Extracting embeddings (last_token):  55%|█████▌    | 54/98 [00:25<00:21,  2.08it/s]
+  [04] Extracting embeddings (last_token):  56%|█████▌    | 55/98 [00:26<00:20,  2.07it/s]
+  [04] Extracting embeddings (last_token):  57%|█████▋    | 56/98 [00:26<00:20,  2.08it/s]
+  [04] Extracting embeddings (last_token):  58%|█████▊    | 57/98 [00:26<00:19,  2.08it/s]
+  [04] Extracting embeddings (last_token):  59%|█████▉    | 58/98 [00:27<00:19,  2.08it/s]
+  [04] Extracting embeddings (last_token):  64%|██████▍   | 63/98 [00:29<00:16,  2.08it/s]
+  [04] Extracting embeddings (last_token):  65%|██████▌   | 64/98 [00:30<00:16,  2.08it/s]
+  [04] Extracting embeddings (last_token):  66%|██████▋   | 65/98 [00:30<00:15,  2.08it/s]
+  [04] Extracting embeddings (last_token):  67%|██████▋   | 66/98 [00:31<00:15,  2.08it/s]
+  [04] Extracting embeddings (last_token):  72%|███████▏  | 71/98 [00:33<00:12,  2.08it/s]
+  [04] Extracting embeddings (last_token):  78%|███████▊  | 76/98 [00:36<00:10,  2.08it/s]
+  [04] Extracting embeddings (last_token):  84%|████████▎ | 82/98 [00:38<00:07,  2.08it/s]
+  [04] Extracting embeddings (last_token):  86%|████████▌ | 84/98 [00:39<00:06,  2.08it/s]
+  [04] Extracting embeddings (last_token):  88%|████████▊ | 86/98 [00:40<00:05,  2.08it/s]
+  [04] Extracting embeddings (last_token):  93%|█████████▎| 91/98 [00:43<00:03,  2.08it/s]
+  [04] Extracting embeddings (last_token):  95%|█████████▍| 93/98 [00:44<00:02,  2.08it/s]
+  [04] Extracting embeddings (last_token):  96%|█████████▌| 94/98 [00:44<00:01,  2.08it/s]
+  [04] Extracting embeddings (last_token):  97%|█████████▋| 95/98 [00:45<00:01,  2.08it/s]
+  [04] Extracting embeddings (last_token):  99%|█████████▉| 97/98 [00:46<00:00,  2.09it/s]
+  [04] Extracting embeddings (last_token): 100%|██████████| 98/98 [00:46<00:00,  2.08it/s]
+  [04] Extracting embeddings (last_token): 100%|██████████| 98/98 [00:46<00:00,  2.10it/s]
+  [04] Val  embeddings: (100000, 512)  |  fraud: 87 / 100,000 (0.09%)
+  [04] Test embeddings: (100000, 512)  |  fraud: 112 / 100,000 (0.11%)
+  [05] Val  ROC-AUC: 0.9876 | AP: 0.1773
+  [05] Test ROC-AUC: 0.9885 | AP: 0.1238
+  [05] Val  ROC-AUC: 0.9230 | AP: 0.0113
+  [05] Test ROC-AUC: 0.9179 | AP: 0.0113
+  [05] Val  ROC-AUC: 0.9923 | AP: 0.1794
+  [05] Test ROC-AUC: 0.9927 | AP: 0.1572
+  [05] Raw Features (baseline)                  13d     0.9885     0.1238
+  [05] 64d PCA Embeddings                       64d     0.9179     0.0113
+  [05] Combined (13+64d)                        77d     0.9927     0.1572 * AUC,AP
+  [05] Embeddings-only                           -7.14%        -90.87%
+  [05] Combined                          +         0.43% +        26.91%

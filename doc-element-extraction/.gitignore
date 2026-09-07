@@ -1,0 +1,10 @@
+# secrets — copy .env.example to .env locally
+.env
+# sample output images (6.6 MB) — regenerate by running the pipeline
+results/
+data/
+**/__pycache__/
+*.py[cod]
+venv/
+.venv/
+node_modules/

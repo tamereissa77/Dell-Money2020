@@ -1,0 +1,19 @@
+# ============================================================
+# Python Dependencies — Retrieval Agent Microservice
+# ============================================================
+
+# --- Web Framework ---
+flask==3.1.0
+gunicorn==23.0.0
+
+# --- PostgreSQL ---
+psycopg2-binary>=2.9.9
+
+# --- Qdrant Vector Search ---
+qdrant-client>=1.9.0
+
+# --- HTTP Client ---
+requests>=2.31.0
+
+# --- Utilities ---
+numpy>=1.26.0

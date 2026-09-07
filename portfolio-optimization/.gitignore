@@ -1,0 +1,4 @@
+data/stock_data/*.csv
+**/__pycache__/
+*.pyc
+*.egg-info/

@@ -9,7 +9,9 @@ no network at run time. Built for Money20/20 Middle East, Riyadh, 14–16 Septem
 
 | Demo | Alias | What it shows |
 |---|---|---|
-| [`financial-fraud-detection`](financial-fraud-detection/) | `fraud` | A graph neural network + XGBoost scoring 24.4M card transactions at ~589,000/sec, with a per-transaction Shapley explanation for every decision. |
+| [`financial-fraud-detection`](financial-fraud-detection/) | `fraud` | A graph neural network + XGBoost scoring 24.4M card transactions at ~589,000/sec, with a per-transaction Shapley explanation for every decision. Includes an embedding-space view from a 29M-parameter transaction foundation model. |
+| [`portfolio-optimization`](portfolio-optimization/) | `portfolio` | Mean-CVaR portfolio optimisation on NVIDIA cuOpt — 18× faster than CPU at 500 assets × 50,000 scenarios, reaching the same optimum. |
+| [`doc-element-extraction`](doc-element-extraction/) | `docs` | Document element extraction and knowledge-graph construction, including Arabic table extraction. Contributed by **iPulse-AI** under partnership. |
 
 ### Financial fraud detection
 
@@ -95,6 +97,12 @@ short name: `echo mydemo > mydemo/.alias`
   a backtest rather than a shuffled split.
 - The UI shows ground truth on every transaction, including its false positives and misses.
   That is intentional.
+
+## Attribution
+
+`doc-element-extraction` originates from [iPulse-AI](https://github.com/iPulse-AI) and is included
+here under a partnership agreement between Dell Technologies and iPulse-AI. Its service credentials
+are development defaults; change them before any deployment beyond a demo.
 
 ## Trademarks
 

@@ -20,7 +20,7 @@ $(strip $(foreach d,$(DEMOS),$(if $(filter $(1),$(d) $(shell cat $(d)/.alias 2>/
 endef
 
 .DEFAULT_GOAL := help
-.PHONY: help list stop stop-others $(DEMOS) $(ALIASES) $(addsuffix -down,$(DEMOS) $(ALIASES)) \
+.PHONY: help list all stop stop-others $(DEMOS) $(ALIASES) $(addsuffix -down,$(DEMOS) $(ALIASES)) \
         $(addsuffix -status,$(DEMOS) $(ALIASES)) $(addsuffix -logs,$(DEMOS) $(ALIASES))
 
 help:
@@ -33,6 +33,7 @@ help:
 	@echo "  make <demo>-verify    run its smoke test (if it has one)"
 	@echo "  make <demo>-prewarm   warm GPU caches (if it has one)"
 	@echo
+	@echo "  make all              start EVERY demo at once (each on its own port)"
 	@echo "  make list             every demo, and whether it is running"
 	@echo "  make stop             stop all demos"
 	@echo
@@ -42,7 +43,8 @@ help:
 	  if [ -n "$$a" ]; then printf "  %-32s (or: make %s)\n" "make $$d" "$$a"; \
 	  else printf "  %-32s\n" "make $$d"; fi; done
 	@echo
-	@echo "Only one demo runs at a time - they share a single GB10."
+	@echo "By default one demo runs at a time (shared GB10). To keep others up:"
+	@echo "  make <demo> KEEP_OTHERS=1     or     make all"
 
 list:
 	@printf "%-34s %-10s %s\n" DEMO ALIAS STATUS
@@ -53,6 +55,12 @@ list:
 	  if [ "$$n" -gt 0 ]; then s="running ($$n)"; else s="stopped"; fi; \
 	  printf "%-34s %-10s %s\n" "$$d" "$$a" "$$s"; done
 
+all:
+	@for d in $(DEMOS); do echo "starting $$d ..."; \
+	  $(MAKE) --no-print-directory -C $$d up >/dev/null 2>&1 || echo "  $$d FAILED"; done
+	@$(MAKE) --no-print-directory list
+	@echo; for d in $(DEMOS); do $(MAKE) --no-print-directory -C $$d open 2>/dev/null || true; done
+
 stop:
 	@for d in $(DEMOS); do \
 	  n=$$(cd $$d && docker compose ps -q 2>/dev/null | wc -l); \
@@ -62,11 +70,11 @@ stop:
 # --- generate per-demo targets for both the directory name and its alias ---
 define DEMO_RULES
 $(1):
-	@other=""; for d in $$(DEMOS); do \
+	@if [ -z "$$(KEEP_OTHERS)" ]; then for d in $$(DEMOS); do \
 	  if [ "$$$$d" != "$(2)" ]; then \
 	    n=$$$$(cd $$$$d && docker compose ps -q 2>/dev/null | wc -l); \
-	    if [ "$$$$n" -gt 0 ]; then echo "stopping $$$$d (shares the GB10) ..."; \
-	      $$(MAKE) --no-print-directory -C $$$$d down >/dev/null 2>&1 || true; fi; fi; done
+	    if [ "$$$$n" -gt 0 ]; then echo "stopping $$$$d (KEEP_OTHERS=1 to keep it up) ..."; \
+	      $$(MAKE) --no-print-directory -C $$$$d down >/dev/null 2>&1 || true; fi; fi; done; fi
 	@echo "starting $(2) ..."
 	@$$(MAKE) --no-print-directory -C $(2) up
 

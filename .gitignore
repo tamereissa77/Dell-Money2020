@@ -12,3 +12,10 @@
 *.log
 *.bak
 *.tgz
+
+# shared CUDA JIT cache (machine-specific)
+.nvcache-shared/
+
+# HuggingFace / model caches (machine-specific, re-downloaded on demand)
+**/.hf/
+**/hf_cache/

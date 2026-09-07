@@ -1,0 +1,123 @@
+[project]
+name = "portfolio-optimization"
+version = "26.6"
+description = "GPU-accelerated portfolio optimization use case powered by NVIDIA cuOpt"
+readme = "README.md"
+# Upper bound tracks the highest Python the dependency stack ships wheels for.
+# On 3.14, uv falls back to building pandas from sdist and the Meson build fails.
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "numpy>=2.0.0",
+    "pandas>=2.0",
+    "cvxpy>=1.9.2",
+    "scikit-learn>=1.5",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "yfinance>=0.2.0",
+    "pydantic>=2.12.5",
+]
+
+# Extras are for genuine optional *runtime* features. Developer tooling lives
+# in [dependency-groups] below, which is not published in package metadata.
+[project.optional-dependencies]
+cuda12 = [
+    "cuml-cu12==26.6.*",
+    "cuopt-cu12==26.6.*",
+]
+cuda13 = [
+    "cuml-cu13==26.4.*",
+    "cuopt-cu13==26.4.*",
+]
+cuda13-socp = [
+    "cuopt-cu13==26.6.*",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["E402"]
+"demo/*.py" = ["E402", "F841"]
+"brev/*.ipynb" = ["E402"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["portfolio_optimization"]
+
+[tool.pytest.ini_options]
+markers = [
+    "gpu: requires an NVIDIA GPU with cuOpt/cuML (deselect with -m 'not gpu')",
+]
+
+[tool.setuptools]
+packages = ["portfolio_optimization"]
+py-modules = []
+
+[tool.setuptools.package-dir]
+portfolio_optimization = "src"
+
+[tool.setuptools.package-data]
+"*" = ["*.csv", "*.pkl", "*.parquet"]
+
+[tool.uv]
+managed = true
+# uv installs the `dev` group by default. Opt out so an end-user or launchable
+# `uv sync --extra cuda13` stays lean and does not pull ruff/pytest/pre-commit;
+# contributors ask for it explicitly with `--group dev`.
+default-groups = []
+conflicts = [
+    [
+        { extra = "cuda12" },
+        { extra = "cuda13" },
+    ],
+    [
+        { extra = "cuda12" },
+        { extra = "cuda13-socp" },
+    ],
+    [
+        { extra = "cuda13" },
+        { extra = "cuda13-socp" },
+    ],
+]
+
+[[tool.uv.index]]
+name = "nvidia"
+url = "https://pypi.nvidia.com"
+
+[tool.uv.sources]
+cuml-cu12 = { index = "nvidia" }
+cuopt-cu12 = { index = "nvidia" }
+cuml-cu13 = { index = "nvidia" }
+cuopt-cu13 = { index = "nvidia" }
+
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# Developer-only dependencies (PEP 735). Install with `uv sync --group dev`.
+# These are deliberately not extras: they are not optional runtime features of
+# the package and should not appear in its published metadata.
+[dependency-groups]
+dev = [
+    "ruff==0.15.9",
+    "pytest>=9.0",
+    "pre-commit==4.3.0",
+]
+# Toolchain for registering the Jupyter kernel and executing the example
+# notebooks in CI (ci/utils/run_notebooks.sh). Registering the kernel is part
+# of the documented end-user workflow, not a dev-only task, so this is its own
+# group rather than living in `dev`. Previously ipykernel sat in `dev` and only
+# worked because uv installs that group by default; with default-groups
+# disabled it must be requested. Keeping papermill/nbconvert here too means
+# their versions resolve into uv.lock rather than being pulled unpinned from
+# PyPI on every CI run.
+notebooks = [
+    "ipykernel>=7.1.0",
+    "nbconvert>=7.16",
+    "papermill>=2.6",
+]

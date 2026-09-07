@@ -1,0 +1,57 @@
+# ============================================================
+# Python Dependencies for Arabic Financial Document Extractor
+# ============================================================
+# NOTE: torch and torchvision are installed separately in the
+# Dockerfile from the PyTorch cu130 index (CUDA GPU support).
+# Do NOT list them here to avoid pip overwriting with CPU builds.
+# ============================================================
+
+# --- VLM Support ---
+# Chandra OCR
+chandra-ocr>=0.1.8
+# LightOnOCR runs purely on Transformers using the lightonai/LightOnOCR-2-1B model
+
+# --- Additional ML / Inference ---
+accelerate>=1.11.0
+qwen-vl-utils>=0.0.14
+transformers>=5.1.0
+pypdfium2
+
+# --- Document Processing (Unstructured) ---
+unstructured[all-docs]>=0.12.0
+unstructured-inference>=0.7.0
+
+# --- PDF / Image Handling ---
+pdf2image>=1.16.3
+Pillow==10.3.0
+python-magic>=0.4.27
+
+# --- OCR ---
+pytesseract>=0.3.10
+
+# --- Frontend ---
+streamlit>=1.50.0
+
+# --- Data Export ---
+pandas>=2.0.0
+openpyxl>=3.1.0
+lxml>=5.0.0
+
+# --- HTML Parsing ---
+beautifulsoup4>=4.12.0
+
+# --- Utilities ---
+numpy>=1.24.0
+
+# ============================================================
+# Storage & Pipeline Dependencies (NEW)
+# ============================================================
+
+# --- PostgreSQL ---
+psycopg2-binary>=2.9.9
+
+# --- MinIO (S3-compatible object store) ---
+minio>=7.2.0
+
+# --- HTTP requests (for Ollama, ArangoDB, Qdrant APIs) ---
+requests>=2.31.0

@@ -1,0 +1,350 @@
+# ============================================================
+# Docker Compose — Arabic Financial Document Extraction Stack
+# ============================================================
+# Services:
+#   1. arabic-table-extractor  — Streamlit app + LightOnOCR/Chandra VLM (GPU)
+#   2. postgres                — Structured table storage
+#   3. pgadmin                 — GUI for Postgres Management
+#   4. arangodb                — Knowledge graph (triples)
+#   5. ollama                  — Local LLM for triple extraction (GPU)
+#   6. qdrant                  — Vector database for embeddings
+#   7. sentence-transformers   — Embedding microservice
+#   8. minio                   — S3-compatible object store for images
+#   9. retrieval               — Agentic RAG retrieval microservice
+# ============================================================
+
+services:
+  # ----------------------------------------------------------------
+  # Main Application — Streamlit + LightOnOCR/Chandra VLM
+  # ----------------------------------------------------------------
+  arabic-table-extractor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_PREFIX}-arabic-table-extractor
+    ports:
+      - "${PORT_STREAMLIT:-8501}:8501"
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+      - ./src:/app/src
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - HF_HOME=/root/.cache/huggingface
+      - TESSDATA_PREFIX=/usr/share/tesseract-ocr/4.00/tessdata
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=${PORT_POSTGRES:-5432}
+      - POSTGRES_DB=extraction_db
+      - POSTGRES_USER=extract_user
+      - POSTGRES_PASSWORD=extract_pass
+      - OLLAMA_BASE_URL=http://ollama:${PORT_OLLAMA:-11434}
+      - OLLAMA_MODEL=llama3.1:8b
+      - ARANGO_URL=http://arangodb:${PORT_ARANGO:-8529}
+      - ARANGO_DB=extraction_kg
+      - QDRANT_URL=http://qdrant:${PORT_QDRANT:-6333}
+      - SENTENCE_TRANSFORMER_URL=http://sentence-transformers:${PORT_SENTENCE_TRANSFORMER:-80}
+      - MINIO_ENDPOINT=minio:${PORT_MINIO_API:-9000}
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_BUCKET=extracted-elements
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      - RETRIEVAL_URL=http://retrieval:${PORT_RETRIEVAL:-8100}
+    networks:
+      - extraction-net
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      arangodb:
+        condition: service_started
+      qdrant:
+        condition: service_started
+      sentence-transformers:
+        condition: service_started
+      minio:
+        condition: service_started
+      ollama:
+        condition: service_started
+      retrieval:
+        condition: service_started
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------
+  # PostgreSQL — Structured table storage
+  # ----------------------------------------------------------------
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ${CONTAINER_PREFIX}-extraction-postgres
+    ports:
+      - "${PORT_POSTGRES:-5432}:5432"
+    environment:
+      - POSTGRES_USER=extract_user
+      - POSTGRES_PASSWORD=extract_pass
+      - POSTGRES_DB=extraction_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./services/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - extraction-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U extract_user -d extraction_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------
+  # pgAdmin — PostgreSQL Web Management UI
+  # ----------------------------------------------------------------
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: ${CONTAINER_PREFIX}-extraction-pgadmin
+    ports:
+      - "${PORT_PGADMIN:-80}:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@extraction.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - extraction-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------
+  # ArangoDB — Knowledge graph storage
+  # ----------------------------------------------------------------
+  arangodb:
+    image: arangodb:latest
+    container_name: ${CONTAINER_PREFIX}-extraction-arangodb
+    ports:
+      - "${PORT_ARANGO:-8529}:8529"
+    environment:
+      - ARANGO_NO_AUTH=1
+    volumes:
+      - arangodb_data:/var/lib/arangodb3
+      - arangodb_apps:/var/lib/arangodb3-apps
+    networks:
+      - extraction-net
+    restart: unless-stopped
+
+  arangodb-init:
+    image: arangodb:latest
+    container_name: ${CONTAINER_PREFIX}-extraction-arangodb-init
+    depends_on:
+      arangodb:
+        condition: service_started
+    restart: "no"
+    entrypoint: >
+      sh -c "
+        echo 'Waiting for ArangoDB...' &&
+        sleep 10 &&
+        echo 'Creating extraction_kg database...' &&
+        arangosh --server.endpoint tcp://arangodb:8529 --server.authentication false --javascript.execute-string '
+          try {
+            db._createDatabase(\"extraction_kg\");
+            console.log(\"Database extraction_kg created.\");
+          } catch(e) {
+            if(e.message.includes(\"duplicate\")) {
+              console.log(\"Database extraction_kg already exists.\");
+            } else { throw e; }
+          }
+        '
+      "
+    networks:
+      - extraction-net
+
+  # ----------------------------------------------------------------
+  # Ollama — Local LLM for knowledge graph triple extraction (GPU)
+  # ----------------------------------------------------------------
+  ollama:
+    build:
+      context: ./services/ollama
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_PREFIX}-extraction-ollama
+    ports:
+      - "${PORT_OLLAMA:-11434}:11434" # Changed from 11434
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - OLLAMA_FLASH_ATTENTION=1
+      - OLLAMA_KEEP_ALIVE=30m
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_KV_CACHE_TYPE=q8_0
+      - OLLAMA_MODEL=llama3.1:8b
+    networks:
+      - extraction-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------
+  # Qdrant — Vector Database
+  # ----------------------------------------------------------------
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: ${CONTAINER_PREFIX}-extraction-qdrant
+    ports:
+      - "${PORT_QDRANT:-6333}:6333" # Changed from 6333
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - extraction-net
+    restart: unless-stopped
+
+  # Qdrant initialization — create collections
+  qdrant-init:
+    image: curlimages/curl:latest
+    container_name: ${CONTAINER_PREFIX}-extraction-qdrant-init
+    depends_on:
+      - qdrant
+    restart: "no"
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo 'Waiting for Qdrant...'
+        sleep 8
+        echo 'Creating document-embeddings collection...'
+        curl -X PUT http://qdrant:6333/collections/document-embeddings \
+          -H 'Content-Type: application/json' \
+          -d '{"vectors":{"size":384,"distance":"Cosine"}}' || true
+        echo ''
+        echo 'Collections created.'
+    networks:
+      - extraction-net
+
+  # ----------------------------------------------------------------
+  # Minio — Object Storage
+  # ----------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    container_name: extraction-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - extraction-net
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------
+  # Sentence Transformers — Embedding microservice
+  # ----------------------------------------------------------------
+  sentence-transformers:
+    build:
+      context: ./services/sentence-transformers
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_PREFIX}-extraction-embeddings
+    ports:
+      - "${PORT_TRANSFORMERS:-8000}:80" # Changed from 8000:80
+    environment:
+      - MODEL_NAME=all-MiniLM-L6-v2
+    networks:
+      - extraction-net
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------
+  # txt2kg Frontend — Knowledge Graph Visualization (Next.js)
+  # ----------------------------------------------------------------
+  txt2kg-frontend:
+    build:
+      context: ./services/txt2kg-frontend
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_PREFIX}-extraction-txt2kg
+    ports:
+      - "${PORT_FRONTEND:-3001}:3000"
+    environment:
+      - ARANGODB_URL=http://arangodb:${PORT_ARANGO:-8529}
+      - ARANGODB_DB=extraction_kg
+      - GRAPH_DB_TYPE=arangodb
+      - NEO4J_URI=bolt://localhost:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=password123
+      - OLLAMA_BASE_URL=http://ollama:${PORT_OLLAMA:-11434}/v1
+      - OLLAMA_MODEL=llama3.1:8b
+      - VLLM_BASE_URL=http://localhost:8001/v1
+      - VLLM_MODEL=disabled
+      - QDRANT_URL=http://qdrant:${PORT_QDRANT:-6333}
+      - VECTOR_DB_TYPE=qdrant
+      - SENTENCE_TRANSFORMER_URL=http://sentence-transformers:${PORT_TRANSFORMERS:-80}
+      - MODEL_NAME=all-MiniLM-L6-v2
+      - EMBEDDINGS_API_URL=http://sentence-transformers:${PORT_TRANSFORMERS:-80}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      - NODE_OPTIONS=--max-http-header-size=80000
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+    networks:
+      - extraction-net
+    depends_on:
+      arangodb:
+        condition: service_started
+      # ollama:
+      #   condition: service_started
+      qdrant:
+        condition: service_started
+      sentence-transformers:
+        condition: service_started
+    restart: unless-stopped
+
+  retrieval:
+    build:
+      context: ./services/retrieval
+      dockerfile: Dockerfile
+    container_name: ${CONTAINER_PREFIX}-extraction-retrieval
+    ports:
+      - "${PORT_RETRIEVAL:-8100}:8100"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:${PORT_OLLAMA:-11434}
+      - POSTGRES_HOST=postgres
+    networks:
+      - extraction-net
+    restart: unless-stopped
+
+networks:
+  extraction-net:
+    driver: bridge
+
+volumes:
+  hf_cache:
+  postgres_data:
+  pgadmin_data:
+  arangodb_data:
+  arangodb_apps:
+  ollama_data:
+  qdrant_data:
+  minio_data:

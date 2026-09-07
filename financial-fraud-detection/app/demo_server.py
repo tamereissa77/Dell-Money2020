@@ -249,6 +249,13 @@ def brand_manifest():
         "nvidia": find("nvidia-white","nvidia"),
     })
 
+@app.after_request
+def _no_cache(resp):
+    """Booth reliability: never let a browser serve a stale page or dataset."""
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    return resp
+
 @app.get("/")
 def index(): return send_from_directory("static","index.html")
 

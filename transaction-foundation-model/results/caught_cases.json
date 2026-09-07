@@ -1,0 +1,32 @@
+[
+  {
+    "amount": "$41.41",
+    "merchant_city": " ONLINE",
+    "state": "nan",
+    "mcc": 4784,
+    "chip": "Online",
+    "when": "2015-06-09",
+    "raw_score": 0.0261,
+    "combined_score": 0.6289
+  },
+  {
+    "amount": "$45.94",
+    "merchant_city": "Lake Forest",
+    "state": "CA",
+    "mcc": 5812,
+    "chip": "Swipe",
+    "when": "2003-12-05",
+    "raw_score": 0.021,
+    "combined_score": 0.3793
+  },
+  {
+    "amount": "$94.07",
+    "merchant_city": "San Francisco",
+    "state": "CA",
+    "mcc": 5311,
+    "chip": "Chip",
+    "when": "2015-12-01",
+    "raw_score": 0.0246,
+    "combined_score": 0.2665
+  }
+]

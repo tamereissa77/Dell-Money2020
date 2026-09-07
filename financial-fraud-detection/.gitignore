@@ -1,6 +1,6 @@
 # Dataset and derived artifacts (2.5 GB) - regenerate with `make data && make preprocess`
-data/
-cache/
+/data/
+/cache/
 training/trained_models_np/
 **/__pycache__/
 *.log
