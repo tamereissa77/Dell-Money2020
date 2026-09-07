@@ -156,6 +156,38 @@ line(tf3, "MONEY20/20 MIDDLE EAST  ·  RIYADH  ·  14–16 SEPTEMBER 2026", 11, 
 notes(s, "Open by putting a hand on the box. The hardware is the story: this entire system runs "
          "on one desktop machine, disconnected.")
 
+# ---------------------------------------------------------------- 1b what is on the box
+s = slide(); header(s, "One machine", "Three financial-services demos, all on-device")
+rows = [
+ ("Fraud detection", C_GREEN,
+  "Graph neural network + XGBoost scoring card transactions in real time, with a "
+  "Shapley explanation behind every decision.",
+  "589,528 txn/sec  ·  F1 0.958"),
+ ("Portfolio optimisation", C_DELLL,
+  "Mean-CVaR optimisation on NVIDIA cuOpt — robust tail-risk allocation fast enough "
+  "to iterate on, not batch overnight.",
+  "18x vs CPU  ·  same optimum"),
+ ("Document intelligence", C_AMBER,
+  "Arabic financial document extraction into tables, text and a knowledge graph — "
+  "the KYC and trade-finance back office.",
+  "on-device OCR + LLM pipeline"),
+]
+y = Inches(2.15)
+for name, col, body, metric in rows:
+    panel(s, Inches(0.8), y, Inches(11.7), Inches(1.32))
+    bar = s.shapes.add_shape(1, Inches(0.8), y, Emu(38100), Inches(1.32))
+    bar.fill.solid(); bar.fill.fore_color.rgb = col; bar.line.fill.background(); bar.shadow.inherit = False
+    tf = tb(s, Inches(1.15), y + Inches(0.2), Inches(7.3), Inches(1.0))
+    line(tf, name, 16, col, True, SANS, 4, first=True)
+    line(tf, body, 12.5, C_DIM, False, SANS, 0)
+    tfm = tb(s, Inches(8.6), y + Inches(0.46), Inches(3.7), Inches(0.5), PP_ALIGN.RIGHT)
+    line(tfm, metric, 12.5, C_TEXT, True, MONO, 0, first=True, align=PP_ALIGN.RIGHT)
+    y += Inches(1.5)
+tf = tb(s, Inches(0.8), Inches(6.75), Inches(11.7), Inches(0.4))
+line(tf, "No cloud. No network at run time. One NVIDIA GB10 on the table.",
+     15, C_GREEN, True, SANS, 0, first=True)
+notes(s, "Set the frame: this is a platform claim, not one demo. Then go deep on fraud.")
+
 # ---------------------------------------------------------------- 2 problem
 s = slide(); header(s, "The problem", "One fraud in every 819 transactions")
 bullets(s, [
@@ -263,8 +295,9 @@ for i,(big,lab,sub) in enumerate(mets):
     x += Inches(4.0)
     if i == 2: x, y = Inches(0.8), Inches(4.15)
 tf = tb(s, Inches(0.8), Inches(6.25), Inches(11.7), Inches(0.6))
-line(tf, "For context: a national card switch handling a few billion payments a year averages "
-         "on the order of a hundred per second.", 14, C_DIM, False, SANS, 0, first=True)
+line(tf, "Portfolio optimisation: 18x vs CPU on a 51,502-variable LP.   "
+         "Document intelligence: full OCR, graph and vector pipeline on the same machine.",
+     13.5, C_DIM, False, SANS, 0, first=True)
 notes(s, "Every figure here was measured on this machine. None of it is from a datasheet.")
 
 # ---------------------------------------------------------------- 7 explainability
@@ -280,6 +313,23 @@ bullets(s, [
   "The demo displays ground truth on every transaction, including its 123 false positives and 56 misses. Confidence, not concealment."),
 ])
 notes(s, "In SAMA-regulated institutions this is the difference between a pilot and production.")
+
+# ---------------------------------------------------------------- 7b embedding space
+s = slide(); header(s, "Beyond supervised learning", "A foundation model for spending")
+picture(s, "embedding-tab.png", Inches(0.8), Inches(2.05), w=Inches(7.4))
+tfx = tb(s, Inches(8.5), Inches(2.15), Inches(4.0), Inches(4.3))
+line(tfx, "29M parameters. A 6,251-token financial vocabulary. Trained only to predict a "
+          "cardholder's next transaction — never shown a fraud label.", 13, C_DIM, False, SANS, 12, first=True)
+line(tfx, "Fraud clusters anyway.", 16, C_TEXT, True, SANS, 12)
+line(tfx, "Adding these embeddings to the production fraud features lifted average precision "
+          "by 26.9% — fewer false alarms at the same catch rate.", 13, C_DIM, False, SANS, 12)
+line(tfx, "Embeddings alone score far worse than plain features. They complement feature "
+          "engineering; they do not replace it.", 12, C_AMBER, False, SANS, 0)
+tf = tb(s, Inches(0.8), Inches(6.6), Inches(11.7), Inches(0.4))
+line(tf, "59,123 transactions from a 1.2M corpus  ·  projected with cuML UMAP in 2.2 s on the GB10",
+     11.5, C_DIM, False, SANS, 0, first=True)
+notes(s, "The GenAI angle. Say plainly that embeddings complement rather than replace - "
+         "a data scientist will ask, and the honest answer is the stronger one.")
 
 # ---------------------------------------------------------------- 8 use cases divider
 s = slide()
@@ -338,6 +388,57 @@ for eyebrow, title, sub, rows, status in UC:
          True, MONO, 0, first=True)
     notes(s, "Be explicit about what is built versus what is architecturally adjacent. "
              "Credibility depends on not blurring the two.")
+
+# ---------------------------------------------------------------- 12b portfolio optimisation
+s = slide()
+rule(s, Inches(0.8), Inches(3.0), Inches(2.2), C_DELLL)
+tf = tb(s, Inches(0.8), Inches(3.25), Inches(11.5), Inches(1.4))
+line(tf, "Demo two — Portfolio optimisation", 40, C_TEXT, True, SANS, 8, first=True)
+line(tf, "The same box, a different discipline: robust tail-risk allocation on NVIDIA cuOpt.",
+     18, C_DIM, False, SANS, 0)
+notes(s, "Transition. This widens the conversation from fraud ops to treasury and wealth.")
+
+s = slide(); header(s, "Portfolio optimisation", "Robust allocation, fast enough to iterate")
+picture(s, "portfolio-ui.png", Inches(0.8), Inches(2.05), w=Inches(7.3))
+tfx = tb(s, Inches(8.4), Inches(2.1), Inches(4.1), Inches(4.4))
+line(tfx, "Mean-CVaR asks a harder question than mean-variance: on the worst 5% of days, "
+          "how much do I lose? Answering it means simulating tens of thousands of futures.",
+     13, C_DIM, False, SANS, 12, first=True)
+mets = [("11.7 s","GPU · cuOpt"),("211.7 s","CPU · CVXPY"),("18x","faster, same optimum")]
+for big, lab in mets:
+    line(tfx, big, 21, C_DELLL, True, MONO, 1)
+    line(tfx, lab, 11.5, C_DIM, False, SANS, 10)
+line(tfx, "500 assets × 50,000 scenarios — an LP with 51,502 variables.", 12, C_TEXT, False, SANS, 0)
+tf = tb(s, Inches(0.8), Inches(6.6), Inches(11.7), Inches(0.45))
+line(tf, "Rebalancing is a repeated task, not a one-off. Across hundreds of backtest solves, "
+         "that gap turns an overnight job into a morning's work.", 13.5, C_GREEN, True, SANS, 0, first=True)
+notes(s, "Lead with the cuOpt solve, never with scenario generation - cuML KDE is not faster "
+         "than sklearn at demo scale. And never demo below ~500 assets: at toy sizes the GPU loses.")
+
+# ---------------------------------------------------------------- 12c document intelligence
+s = slide()
+rule(s, Inches(0.8), Inches(3.0), Inches(2.2), C_AMBER)
+tf = tb(s, Inches(0.8), Inches(3.25), Inches(11.5), Inches(1.4))
+line(tf, "Demo three — Document intelligence", 40, C_TEXT, True, SANS, 8, first=True)
+line(tf, "Arabic financial documents into structured data — on the same box, still offline.",
+     18, C_DIM, False, SANS, 0)
+notes(s, "The back-office story. Strongest regional differentiator of the three.")
+
+s = slide(); header(s, "Document intelligence", "Arabic documents into tables, text and a graph")
+picture(s, "docs-ui.png", Inches(0.8), Inches(2.05), w=Inches(7.3))
+tfx = tb(s, Inches(8.4), Inches(2.1), Inches(4.1), Inches(4.4))
+line(tfx, "KYC files, trade-finance paperwork and account-opening packs arrive as scans — "
+          "often in Arabic, often as tables no rules engine can read.", 13, C_DIM, False, SANS, 12, first=True)
+line(tfx, "The pipeline", 12, C_AMBER, True, MONO, 8)
+for step in ("Layout detection and OCR on the page",
+             "Tables → PostgreSQL, structured and queryable",
+             "Text → knowledge graph (Ollama → ArangoDB)",
+             "All content → vector store (Qdrant) for retrieval",
+             "Source images → object store (MinIO)"):
+    line(tfx, "·  " + step, 12.5, C_TEXT, False, SANS, 6)
+line(tfx, "Every model runs on the GB10. No document leaves the building.",
+     12.5, C_GREEN, True, SANS, 0)
+notes(s, "Arabic table extraction is the differentiator - most vendors on that floor will not have it.")
 
 # ---------------------------------------------------------------- 13 sovereign
 s = slide(); header(s, "Why it runs on one box", "Data residency without a cloud dependency")

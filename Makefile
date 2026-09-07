@@ -11,6 +11,9 @@
 # it a short name, e.g. echo fraud > mydemo/.alias
 
 SHELL   := /bin/bash
+# Grace period for SIGTERM before Docker escalates to SIGKILL. Ollama and Triton
+# need well over the 10s default; a rushed kill is what produced Exit 137.
+STOP_TIMEOUT ?= 60
 DEMOS   := $(sort $(notdir $(patsubst %/,%,$(dir $(wildcard */Makefile)))))
 ALIASES := $(sort $(foreach d,$(DEMOS),$(shell cat $(d)/.alias 2>/dev/null)))
 
@@ -20,7 +23,7 @@ $(strip $(foreach d,$(DEMOS),$(if $(filter $(1),$(d) $(shell cat $(d)/.alias 2>/
 endef
 
 .DEFAULT_GOAL := help
-.PHONY: help list all stop stop-others $(DEMOS) $(ALIASES) $(addsuffix -down,$(DEMOS) $(ALIASES)) \
+.PHONY: help list stop stop-others _gpu_free $(DEMOS) $(ALIASES) $(addsuffix -down,$(DEMOS) $(ALIASES)) \
         $(addsuffix -status,$(DEMOS) $(ALIASES)) $(addsuffix -logs,$(DEMOS) $(ALIASES))
 
 help:
@@ -33,7 +36,6 @@ help:
 	@echo "  make <demo>-verify    run its smoke test (if it has one)"
 	@echo "  make <demo>-prewarm   warm GPU caches (if it has one)"
 	@echo
-	@echo "  make all              start EVERY demo at once (each on its own port)"
 	@echo "  make list             every demo, and whether it is running"
 	@echo "  make stop             stop all demos"
 	@echo
@@ -43,8 +45,8 @@ help:
 	  if [ -n "$$a" ]; then printf "  %-32s (or: make %s)\n" "make $$d" "$$a"; \
 	  else printf "  %-32s\n" "make $$d"; fi; done
 	@echo
-	@echo "By default one demo runs at a time (shared GB10). To keep others up:"
-	@echo "  make <demo> KEEP_OTHERS=1     or     make all"
+	@echo "One demo runs at a time. Starting a demo gracefully stops any other"
+	@echo "first (SIGTERM, up to $(STOP_TIMEOUT)s to finish) - the GB10 is shared."
 
 list:
 	@printf "%-34s %-10s %s\n" DEMO ALIAS STATUS
@@ -55,26 +57,32 @@ list:
 	  if [ "$$n" -gt 0 ]; then s="running ($$n)"; else s="stopped"; fi; \
 	  printf "%-34s %-10s %s\n" "$$d" "$$a" "$$s"; done
 
-all:
-	@for d in $(DEMOS); do echo "starting $$d ..."; \
-	  $(MAKE) --no-print-directory -C $$d up >/dev/null 2>&1 || echo "  $$d FAILED"; done
-	@$(MAKE) --no-print-directory list
-	@echo; for d in $(DEMOS); do $(MAKE) --no-print-directory -C $$d open 2>/dev/null || true; done
-
 stop:
 	@for d in $(DEMOS); do \
 	  n=$$(cd $$d && docker compose ps -q 2>/dev/null | wc -l); \
-	  if [ "$$n" -gt 0 ]; then echo "stopping $$d ..."; $(MAKE) --no-print-directory -C $$d down >/dev/null 2>&1 || true; fi; done
+	  if [ "$$n" -gt 0 ]; then printf "  stopping %s gracefully " "$$d"; \
+	    (cd $$d && docker compose stop --timeout $(STOP_TIMEOUT) >/dev/null 2>&1); \
+	    (cd $$d && docker compose down --timeout $(STOP_TIMEOUT) >/dev/null 2>&1); \
+	    for i in $$(seq 1 60); do \
+	      left=$$(cd $$d && docker compose ps -q 2>/dev/null | wc -l); \
+	      [ "$$left" -eq 0 ] && break; printf "."; sleep 1; done; echo " done"; fi; done
 	@echo "all demos stopped."
 
 # --- generate per-demo targets for both the directory name and its alias ---
 define DEMO_RULES
 $(1):
-	@if [ -z "$$(KEEP_OTHERS)" ]; then for d in $$(DEMOS); do \
+	@for d in $$(DEMOS); do \
 	  if [ "$$$$d" != "$(2)" ]; then \
 	    n=$$$$(cd $$$$d && docker compose ps -q 2>/dev/null | wc -l); \
-	    if [ "$$$$n" -gt 0 ]; then echo "stopping $$$$d (KEEP_OTHERS=1 to keep it up) ..."; \
-	      $$(MAKE) --no-print-directory -C $$$$d down >/dev/null 2>&1 || true; fi; fi; done; fi
+	    if [ "$$$$n" -gt 0 ]; then \
+	      printf "  stopping %s gracefully (shared GB10) " "$$$$d"; \
+	      (cd $$$$d && docker compose stop --timeout $$(STOP_TIMEOUT) >/dev/null 2>&1); \
+	      (cd $$$$d && docker compose down --timeout $$(STOP_TIMEOUT) >/dev/null 2>&1); \
+	      for i in $$$$(seq 1 60); do \
+	        left=$$$$(cd $$$$d && docker compose ps -q 2>/dev/null | wc -l); \
+	        [ "$$$$left" -eq 0 ] && break; printf "."; sleep 1; done; \
+	      echo " done"; fi; fi; done
+	@$$(MAKE) --no-print-directory _gpu_free
 	@echo "starting $(2) ..."
 	@$$(MAKE) --no-print-directory -C $(2) up
 
@@ -96,3 +104,9 @@ endef
 
 $(foreach d,$(DEMOS),$(eval $(call DEMO_RULES,$(d),$(d))))
 $(foreach d,$(DEMOS),$(foreach a,$(shell cat $(d)/.alias 2>/dev/null),$(eval $(call DEMO_RULES,$(a),$(d)))))
+
+# report free GPU + RAM before a demo starts, so contention is visible
+_gpu_free:
+	@u=$$(nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader 2>/dev/null | head -1); \
+	 m=$$(free -g | awk 'NR==2{print $$7"G free of "$$2"G"}'); \
+	 echo "  GB10 ready — gpu util $${u:-n/a} · ram $$m"

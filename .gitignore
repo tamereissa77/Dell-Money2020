@@ -19,3 +19,7 @@
 # HuggingFace / model caches (machine-specific, re-downloaded on demand)
 **/.hf/
 **/hf_cache/
+
+# editor/working backups
+*.bak
+*.pre-restyle

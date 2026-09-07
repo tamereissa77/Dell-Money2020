@@ -259,5 +259,15 @@ def _no_cache(resp):
 @app.get("/")
 def index(): return send_from_directory("static","index.html")
 
+def _shutdown(signum, frame):
+    """Flask's threaded dev server ignores SIGTERM, so `docker compose stop`
+    waits out the whole grace period and then SIGKILLs (exit 137). Exit
+    promptly and cleanly instead — the app holds no unsaved state."""
+    print("[demo] SIGTERM received — shutting down", flush=True)
+    os._exit(0)
+
 if __name__ == "__main__":
+    import signal
+    signal.signal(signal.SIGTERM, _shutdown)
+    signal.signal(signal.SIGINT, _shutdown)
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT","8090")), threaded=True)

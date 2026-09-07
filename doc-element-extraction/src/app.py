@@ -54,110 +54,183 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* Global Backgrounds */
-    .stApp { background-color: #f9f9f9; }
-    
-    /* Text Visibility Overrides */
-    html, body, [class*="css"]  {
-        font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    }
-    
-    .stMarkdown p, .stMarkdown span, div[data-testid="stMarkdownContainer"] p {
-        color: #1a1a1a !important;
-        font-weight: 500 !important;
-        line-height: 1.6;
-    }
-    
-    /* Labels and Headers */
-    label[data-testid="stWidgetLabel"] p {
-        color: #000000 !important;
-        font-weight: 700 !important;
-        font-size: 1.05rem !important;
-    }
-    
-    h1, h2, h3, .st-emotion-cache-10trblm { 
-        color: #000000 !important;
-        font-weight: 800 !important;
+    /* ── palette: matched to the fraud-detection demo ────────────────────── */
+    :root{
+      --bg:#0a0e13; --panel:#111820; --panel2:#161f2a; --panel3:#1b2634;
+      --line:#22303f; --line2:#2d3d4f;
+      --txt:#e8eef5; --dim:#8ba0b6;
+      --green:#76b900; --green-soft:rgba(118,185,0,.13);
+      --red:#ff4757; --red-soft:rgba(255,71,87,.12);
+      --amber:#ffa502; --amber-soft:rgba(255,165,2,.12);
+      --dell:#0076CE; --dell-lt:#4aa8e8; --dell-soft:rgba(0,118,206,.14);
+      --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
     }
 
-    /* Sidebars */
-    [data-testid="stSidebar"] .stMarkdown p {
-        font-size: 0.95rem !important;
-        font-weight: 600 !important;
-    }
+    /* ── canvas ──────────────────────────────────────────────────────────── */
+    .stApp{background:var(--bg)}
+    html,body,[class*="css"]{font-family:var(--sans);-webkit-font-smoothing:antialiased}
+    /* brand rule across the very top, as in demo 1 */
+    .stApp::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;
+      background:linear-gradient(90deg,var(--dell) 0%,var(--dell) 48%,var(--green) 52%,var(--green) 100%)}
+    header[data-testid="stHeader"]{background:transparent!important;height:2.4rem}
+    header[data-testid="stHeader"] [data-testid="stToolbar"]{display:none}
+    .block-container{padding-top:.9rem;padding-bottom:3rem;max-width:1550px}
 
-    /* Captions */
-    .stCaptionContainer p {
-        color: #444444 !important;
-        font-weight: 600 !important;
-        font-size: 0.85rem !important;
-    }
+    /* ── typography ──────────────────────────────────────────────────────── */
+    h1,h2,h3,h4{color:var(--txt)!important;letter-spacing:-.02em;text-wrap:balance}
+    h1{font-size:1.85rem!important;font-weight:650!important;line-height:1.2!important;margin:0 0 .2rem!important}
+    h2{font-size:.8rem!important;font-weight:600!important;font-family:var(--mono)!important;
+       text-transform:uppercase;letter-spacing:.1em;color:var(--dim)!important;
+       margin:2rem 0 .8rem!important;padding-bottom:.55rem;border-bottom:1px solid var(--line)}
+    h3{font-size:.95rem!important;font-weight:600!important;margin:1.1rem 0 .5rem!important}
+    .stMarkdown p,div[data-testid="stMarkdownContainer"] p{
+       color:var(--dim)!important;font-weight:400!important;line-height:1.62;font-size:.93rem}
+    .stMarkdown strong{color:var(--txt)!important;font-weight:600!important}
+    [data-testid="stCaptionContainer"] p,.stCaptionContainer p{
+       color:var(--dim)!important;font-weight:400!important;font-size:.81rem!important;line-height:1.55}
+    label[data-testid="stWidgetLabel"] p{
+       color:var(--txt)!important;font-weight:600!important;font-size:.78rem!important;
+       font-family:var(--mono)!important;text-transform:uppercase;letter-spacing:.08em;
+       margin-bottom:.4rem!important}
 
-    .rtl-text {
-        direction: rtl; text-align: right;
-        font-family: 'Noto Sans Arabic', 'Segoe UI', Tahoma, sans-serif;
-    }
-    
-    /* Tables */
-    table { width: 100%; border-collapse: collapse; font-size: 0.95em; }
-    th, td { padding: 12px 16px; border-bottom: 1px solid #d1d5da; }
-    th { background-color: #f1f3f5; color: #1a1a1a; text-transform: uppercase; font-size: 0.8em; letter-spacing: 0.05em; font-weight: 700; text-align: left; border-top: 1px solid #d1d5da; }
-    td { color: #1a1a1a; font-weight: 500; }
-    tr:hover { background-color: #f1f8ff; }
-    
-    /* Cards/Containers */
-    .st-card {
-        background-color: #ffffff;
-        border: 1px solid #d1d5da;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.06);
-    }
-    
-    /* Buttons */
-    .stButton > button {
-        background-color: #ffffff;
-        color: #1a1a1a;
-        border: 2px solid #d1d5da;
-        border-radius: 8px;
-        font-weight: 700;
-        padding: 0.5rem 1rem;
-        transition: all 0.2s ease;
-    }
-    .stButton > button:hover {
-        border-color: #76B900;
-        color: #76B900;
-        background-color: rgba(118, 185, 0, 0.08);
-    }
-    .stButton > button[kind="primary"] {
-        background-color: #76B900;
-        color: #ffffff;
-        border: none;
-        font-weight: 700;
-    }
-    .stButton > button[kind="primary"]:hover {
-        background-color: #65a100;
-        box-shadow: 0 4px 10px rgba(118, 185, 0, 0.3);
-    }
+    /* ── sidebar ─────────────────────────────────────────────────────────── */
+    [data-testid="stSidebar"]{background:var(--panel);border-right:1px solid var(--line);
+       min-width:310px!important;max-width:310px!important;
+       transform:none!important;visibility:visible!important;margin-left:0!important}
+    [data-testid="stSidebar"][aria-expanded="false"]{transform:none!important}
+    [data-testid="stSidebar"] > div{padding-top:1.3rem}
+    [data-testid="stSidebar"] .stMarkdown p{font-size:.87rem!important;color:var(--dim)!important}
+    [data-testid="stSidebar"] h1,[data-testid="stSidebar"] h3{
+       font-size:.72rem!important;font-weight:600!important;font-family:var(--mono)!important;
+       text-transform:uppercase;letter-spacing:.1em;color:var(--dim)!important;
+       border:0!important;margin-top:1.3rem!important}
+    [data-testid="stSidebar"] hr{margin:1.1rem 0;border-color:var(--line)}
+    /* sidebar is pinned open, so the collapse affordance is dead weight */
+    [data-testid="stSidebarCollapseButton"],[data-testid="collapsedControl"]{display:none!important}
 
-    /* Badges */
-    .backend-ok { color: #3d6200; font-weight: 800; }
-    .backend-err { color: #b71c1c; font-weight: 800; }
-    .pipeline-badge {
-        display: inline-block; padding: 5px 12px; border-radius: 12px;
-        font-size: 0.8em; margin: 4px; font-weight: 700; border: 1px solid #d1d5da; background-color: #f8f9fa;
-    }
-    .badge-status { border-color: #76B900; color: #3d6200; background-color: rgba(118, 185, 0, 0.08); }
-    
-    .edit-hint {
-        background: #fff9db; border: 1px solid #fcc419; border-radius: 8px;
-        padding: 10px 15px; margin: 8px 0; font-size: 0.9em; color: #856404; font-weight: 600;
-    }
-    
-    /* Hide top padding and header bar */
-    header[data-testid="stHeader"] { display: none; }
-    .block-container { padding-top: 1.5rem; }
+    /* ── inputs ──────────────────────────────────────────────────────────── */
+    [data-testid="stRadio"] label p{font-size:.88rem!important;color:var(--dim)!important}
+    [data-testid="stRadio"] label:hover p{color:var(--txt)!important}
+    div[data-baseweb="select"] > div{
+       background:var(--panel2)!important;border:1px solid var(--line2)!important;
+       border-radius:8px!important;font-size:.88rem!important;color:var(--txt)!important;min-height:38px}
+    div[data-baseweb="select"] > div:hover{border-color:var(--green)!important}
+    div[data-baseweb="popover"] li{background:var(--panel2)!important;color:var(--txt)!important}
+    .stTextInput input,.stNumberInput input,.stTextArea textarea{
+       background:var(--panel2)!important;color:var(--txt)!important;
+       border:1px solid var(--line2)!important;border-radius:8px!important;font-size:.9rem!important}
+    .stTextInput input:focus,.stNumberInput input:focus{
+       border-color:var(--green)!important;box-shadow:0 0 0 3px var(--green-soft)!important}
+    [data-testid="stFileUploaderDropzone"]{
+       background:var(--panel);border:1.5px dashed var(--line2);border-radius:12px;
+       padding:1.5rem;transition:border-color .18s,background .18s}
+    [data-testid="stFileUploaderDropzone"]:hover{border-color:var(--green);background:var(--green-soft)}
+    [data-testid="stFileUploaderDropzone"] *{color:var(--dim)!important}
+
+    /* ── buttons ─────────────────────────────────────────────────────────── */
+    .stButton > button{
+       background:var(--panel2);color:var(--txt);border:1px solid var(--line2);
+       border-radius:8px;font-weight:550;font-size:.86rem;padding:.46rem 1rem;transition:all .16s}
+    .stButton > button:hover{border-color:var(--green);color:var(--green);background:var(--green-soft)}
+    .stButton > button:active{transform:translateY(1px)}
+    .stButton > button[kind="primary"]{
+       background:var(--green);color:#0a0e13;border:1px solid var(--green);font-weight:650}
+    .stButton > button[kind="primary"]:hover{background:#8ad000;border-color:#8ad000;color:#0a0e13}
+    [data-testid="stDownloadButton"] > button{
+       background:var(--dell);color:#fff;border:1px solid var(--dell);font-weight:600}
+    [data-testid="stDownloadButton"] > button:hover{background:#0088ee;border-color:#0088ee;color:#fff}
+
+    /* ── tabs / expanders ────────────────────────────────────────────────── */
+    [data-testid="stTabs"] button{font-weight:600;font-size:.78rem;color:var(--dim);
+       font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em}
+    [data-testid="stTabs"] button[aria-selected="true"]{color:var(--green)!important}
+    [data-testid="stExpander"]{border:1px solid var(--line);border-radius:12px;
+       background:var(--panel);overflow:hidden}
+    [data-testid="stExpander"] summary{font-weight:550;font-size:.89rem;color:var(--txt)}
+    [data-testid="stExpander"] summary:hover{color:var(--green)}
+
+    /* ── tables ──────────────────────────────────────────────────────────── */
+    table{width:100%;border-collapse:separate;border-spacing:0;font-size:.87rem;
+          background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+    th{background:var(--panel2);color:var(--dim);text-transform:uppercase;font-family:var(--mono);
+       font-size:.68rem;letter-spacing:.09em;font-weight:600;text-align:left;
+       padding:11px 14px;border-bottom:1px solid var(--line)}
+    td{color:var(--txt);font-weight:400;padding:11px 14px;border-bottom:1px solid var(--line)}
+    tbody tr:last-child td{border-bottom:0}
+    tbody tr:hover td{background:var(--panel2)}
+    [data-testid="stDataFrame"]{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+
+    /* ── cards & status ──────────────────────────────────────────────────── */
+    .st-card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+       padding:22px;margin-bottom:20px}
+    .backend-ok{color:var(--green);font-weight:600;font-size:.85rem;font-family:var(--mono)}
+    .backend-err{color:var(--red);font-weight:600;font-size:.85rem;font-family:var(--mono)}
+    .pipeline-badge{display:inline-block;padding:5px 11px;border-radius:99px;
+       font-size:.72rem;margin:3px;font-weight:600;font-family:var(--mono);letter-spacing:.04em;
+       border:1px solid var(--line2);background:var(--panel2);color:var(--dim)}
+    .badge-status{border-color:rgba(118,185,0,.4);color:var(--green);background:var(--green-soft)}
+    .edit-hint{background:var(--amber-soft);border:1px solid rgba(255,165,2,.3);
+       border-left:3px solid var(--amber);border-radius:0 8px 8px 0;
+       padding:11px 15px;margin:10px 0;font-size:.86rem;color:var(--amber);font-weight:500}
+
+    /* ── alerts ──────────────────────────────────────────────────────────── */
+    [data-testid="stAlert"]{border-radius:10px;border:1px solid var(--line);
+       background:var(--panel2);font-size:.88rem}
+    [data-testid="stAlert"] p{color:var(--txt)!important}
+
+    /* ── arabic / RTL ────────────────────────────────────────────────────── */
+    .rtl-text{direction:rtl;text-align:right;line-height:1.95;font-size:1.02rem;
+       font-family:'Noto Sans Arabic','Segoe UI',Tahoma,sans-serif;color:var(--txt)}
+
+    /* ── images ──────────────────────────────────────────────────────────── */
+    [data-testid="stImage"] img{border-radius:10px;border:1px solid var(--line)}
+    [data-testid="stImage"] figcaption{color:var(--dim)!important;font-size:.77rem!important;
+       font-family:var(--mono);text-align:center;padding-top:.4rem}
+    [data-testid="stSidebar"] [data-testid="stImage"] img{border:0}
+
+    /* ── page header ─────────────────────────────────────────────────────── */
+    .page-head{padding:.2rem 0 1.5rem;border-bottom:1px solid var(--line);margin-bottom:1.6rem}
+    .page-eyebrow{font:600 10.5px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;
+       color:var(--green);margin-bottom:.6rem}
+    .page-title{font-size:2rem!important;font-weight:650!important;color:var(--txt)!important;
+       letter-spacing:-.025em;margin:0 0 .5rem!important;line-height:1.15!important}
+    .page-sub{font-size:.95rem;line-height:1.6;color:var(--dim);max-width:62ch}
+    .page-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:1.1rem}
+    .chip{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:99px;
+       background:var(--panel2);border:1px solid var(--line2);color:var(--txt);
+       font:500 12.5px/1 var(--sans)}
+    .chip-k{font:600 9.5px/1 var(--mono);letter-spacing:.11em;text-transform:uppercase;color:var(--dim)}
+    .chip-on{background:var(--green-soft);border-color:rgba(118,185,0,.38);color:var(--green)}
+    .chip-on .dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+       animation:pulse 1.9s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+    @media(prefers-reduced-motion:reduce){.chip-on .dot{animation:none}}
+
+    /* ── working space: give sections air and shape ──────────────────────── */
+    .block-container [data-testid="stVerticalBlock"]{gap:.85rem}
+    [data-testid="stFileUploaderDropzone"]{min-height:120px;align-items:center}
+    [data-testid="stFileUploaderDropzone"] button{
+       background:var(--panel3)!important;border:1px solid var(--line2)!important;
+       color:var(--txt)!important;border-radius:8px!important;font-weight:550!important}
+    [data-testid="stFileUploaderDropzone"] button:hover{
+       border-color:var(--green)!important;color:var(--green)!important}
+    [data-testid="stFileUploaderDropzone"] small{color:var(--dim)!important}
+    /* uploaded page thumbnails sit on panels, not bare on the ground */
+    [data-testid="stImage"]{background:var(--panel);border-radius:12px;padding:10px}
+    [data-testid="stImage"] img{border-color:var(--line)}
+    [data-testid="stSidebar"] [data-testid="stImage"]{background:transparent;padding:0}
+    /* horizontal rules become quieter section breaks */
+    .block-container hr{margin:1.8rem 0;border-color:var(--line);opacity:.7}
+
+    /* ── misc ────────────────────────────────────────────────────────────── */
+    hr{border-color:var(--line)}
+    code{background:var(--panel2);border:1px solid var(--line);border-radius:5px;
+         padding:.1rem .35rem;font-family:var(--mono);font-size:.84em;color:var(--green)}
+    [data-testid="stSpinner"] > div{border-top-color:var(--green)!important}
+    ::-webkit-scrollbar{width:9px;height:9px}
+    ::-webkit-scrollbar-thumb{background:var(--line2);border-radius:5px}
+    ::-webkit-scrollbar-track{background:var(--panel)}
     </style>
     """,
     unsafe_allow_html=True,
@@ -489,7 +562,7 @@ def render_pipeline_badges(result: dict):
 # Sidebar
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    st.image("src/cbe_logo.png", use_container_width=True)
+    st.image("src/brand/dell_nvidia_lockup_dark.png", use_container_width=True)
     st.markdown("<br>", unsafe_allow_html=True)
     st.title("Settings")
     st.markdown("---")
@@ -584,15 +657,21 @@ with st.sidebar:
 # ---------------------------------------------------------------------------
 # Main Area
 # ---------------------------------------------------------------------------
-col_logo, col_title = st.columns([1, 4])
-with col_logo:
-    st.image("src/cbe_icon.png", width=80)
-with col_title:
-    st.title("Financial Document extraction & ingestion tool")
-
 st.markdown(
-    "Upload an Arabic financial document (PDF or image). \n\n"
-    f"**Mode: {mode}** &nbsp;|&nbsp; **Model: {model_choice}**"
+    f"""
+    <div class="page-head">
+      <div class="page-eyebrow">Document intelligence</div>
+      <h1 class="page-title">Financial Document Extraction &amp; Ingestion</h1>
+      <div class="page-sub">Upload an Arabic financial document — PDF or image — to extract
+         tables and text, then ingest into the storage pipeline.</div>
+      <div class="page-chips">
+        <span class="chip"><span class="chip-k">Mode</span>{mode}</span>
+        <span class="chip"><span class="chip-k">Model</span>{model_choice}</span>
+        <span class="chip chip-on"><span class="dot"></span>On-device · NVIDIA GB10</span>
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 uploaded_file = st.file_uploader(
