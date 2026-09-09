@@ -44,7 +44,7 @@ services:
     volumes:
       - ./app:/app:ro
       - ./data:/data:ro
-      - ./brand:/brand:ro
+      - ../brand:/brand:ro
       - ./cache/nvcache:/nvcache
     environment:
       TRITON_URL: "triton:8000"

@@ -74,7 +74,7 @@ def picture(s, name, x, y, w=None, h=None, frame=True):
         fr.shadow.inherit = False
     return s.shapes.add_picture(str(f), x, y, w, h)
 
-BRAND = pathlib.Path(__file__).parent.parent / "brand"
+BRAND = pathlib.Path(__file__).parent.parent / "brand"   # ~/APPS/Money2020/brand
 
 def brand_rule(s):
     """Dell blue -> NVIDIA green rule across the top, matching the demo UI."""
@@ -157,7 +157,7 @@ notes(s, "Open by putting a hand on the box. The hardware is the story: this ent
          "on one desktop machine, disconnected.")
 
 # ---------------------------------------------------------------- 1b what is on the box
-s = slide(); header(s, "One machine", "Three financial-services demos, all on-device")
+s = slide(); header(s, "One machine", "Four financial-services demos, all on-device")
 rows = [
  ("Fraud detection", C_GREEN,
   "Graph neural network + XGBoost scoring card transactions in real time, with a "
@@ -170,22 +170,26 @@ rows = [
  ("Document intelligence", C_AMBER,
   "Arabic financial document extraction into tables, text and a knowledge graph — "
   "the KYC and trade-finance back office.",
-  "on-device OCR + LLM pipeline"),
+  "on-device OCR + LLM"),
+ ("Loan origination", C_DELL,
+  "A 7B vision-language model reading identity and income documents, with a state "
+  "machine driving approval and deterministic cross-document fraud checks.",
+  "Qwen2.5-VL-7B · 8 services"),
 ]
-y = Inches(2.15)
+y = Inches(2.0)
 for name, col, body, metric in rows:
-    panel(s, Inches(0.8), y, Inches(11.7), Inches(1.32))
-    bar = s.shapes.add_shape(1, Inches(0.8), y, Emu(38100), Inches(1.32))
+    panel(s, Inches(0.8), y, Inches(11.7), Inches(1.06))
+    bar = s.shapes.add_shape(1, Inches(0.8), y, Emu(38100), Inches(1.06))
     bar.fill.solid(); bar.fill.fore_color.rgb = col; bar.line.fill.background(); bar.shadow.inherit = False
-    tf = tb(s, Inches(1.15), y + Inches(0.2), Inches(7.3), Inches(1.0))
-    line(tf, name, 16, col, True, SANS, 4, first=True)
-    line(tf, body, 12.5, C_DIM, False, SANS, 0)
-    tfm = tb(s, Inches(8.6), y + Inches(0.46), Inches(3.7), Inches(0.5), PP_ALIGN.RIGHT)
-    line(tfm, metric, 12.5, C_TEXT, True, MONO, 0, first=True, align=PP_ALIGN.RIGHT)
-    y += Inches(1.5)
-tf = tb(s, Inches(0.8), Inches(6.75), Inches(11.7), Inches(0.4))
+    tf = tb(s, Inches(1.15), y + Inches(0.15), Inches(7.3), Inches(0.85))
+    line(tf, name, 15, col, True, SANS, 3, first=True)
+    line(tf, body, 11.5, C_DIM, False, SANS, 0)
+    tfm = tb(s, Inches(8.6), y + Inches(0.36), Inches(3.7), Inches(0.5), PP_ALIGN.RIGHT)
+    line(tfm, metric, 11.5, C_TEXT, True, MONO, 0, first=True, align=PP_ALIGN.RIGHT)
+    y += Inches(1.18)
+tf = tb(s, Inches(0.8), Inches(6.72), Inches(11.7), Inches(0.4))
 line(tf, "No cloud. No network at run time. One NVIDIA GB10 on the table.",
-     15, C_GREEN, True, SANS, 0, first=True)
+     14, C_GREEN, True, SANS, 0, first=True)
 notes(s, "Set the frame: this is a platform claim, not one demo. Then go deep on fraud.")
 
 # ---------------------------------------------------------------- 2 problem
@@ -440,6 +444,43 @@ line(tfx, "Every model runs on the GB10. No document leaves the building.",
      12.5, C_GREEN, True, SANS, 0)
 notes(s, "Arabic table extraction is the differentiator - most vendors on that floor will not have it.")
 
+# ---------------------------------------------------------------- 12d loan origination
+s = slide()
+rule(s, Inches(0.8), Inches(3.0), Inches(2.2), C_DELL)
+tf = tb(s, Inches(0.8), Inches(3.25), Inches(11.5), Inches(1.4))
+line(tf, "Demo four — Loan origination", 40, C_TEXT, True, SANS, 8, first=True)
+line(tf, "A vision-language model reading the documents a loan officer reads, and a state "
+         "machine making the decision auditable.", 18, C_DIM, False, SANS, 0)
+notes(s, "Retail banking. Pairs naturally with document intelligence - same box, deeper workflow.")
+
+s = slide(); header(s, "Loan origination", "From document upload to an auditable decision")
+stages = [
+ ("01", "Capture", "Applicant uploads identity and income documents — national ID, "
+                    "employer letter, tax card, utility bill."),
+ ("02", "Read", "A 7B vision-language model reads each document natively. No OCR-then-parse "
+                 "pipeline, no template per document type."),
+ ("03", "Cross-check", "Deterministic validation across documents: does the name on the ID match "
+                        "the employer letter, does declared income match the tax card. Arithmetic, not inference."),
+ ("04", "Decide", "A state machine walks the approval path and records why — every step "
+                   "reconstructable for an auditor."),
+]
+y = Inches(2.1)
+for num, title, body in stages:
+    tfn = tb(s, Inches(0.8), y, Inches(0.7), Inches(0.5))
+    line(tfn, num, 15, C_DELLL, True, MONO, 0, first=True)
+    tft = tb(s, Inches(1.6), y - Emu(20000), Inches(2.3), Inches(0.5))
+    line(tft, title, 15, C_TEXT, True, SANS, 0, first=True)
+    tfb = tb(s, Inches(4.1), y - Emu(20000), Inches(8.4), Inches(0.9))
+    line(tfb, body, 12.5, C_DIM, False, SANS, 0, first=True)
+    y += Inches(1.02)
+panel(s, Inches(0.8), Inches(6.2), Inches(11.7), Inches(0.62))
+tfc = tb(s, Inches(1.1), Inches(6.36), Inches(11.1), Inches(0.4))
+line(tfc, "Why it matters here:  the fraud checks are arithmetic, not model output — "
+          "so the model can be wrong without the decision being unsafe.",
+     13, C_GREEN, True, SANS, 0, first=True)
+notes(s, "The deterministic cross-document check is the strongest point for a regulated buyer: "
+         "the LLM extracts, but the decision rests on arithmetic that cannot hallucinate.")
+
 # ---------------------------------------------------------------- 13 sovereign
 s = slide(); header(s, "Why it runs on one box", "Data residency without a cloud dependency")
 bullets(s, [
@@ -492,5 +533,5 @@ for i, sl in enumerate(prs.slides):
     if i == 0: continue
     footer(sl, f"{i+1:02d} / {len(prs.slides._sldIdLst):02d}")
 
-out = str(pathlib.Path(__file__).parent / "Financial-Fraud-Detection-GB10.pptx")
+out = str(pathlib.Path(__file__).parent / "GB10-Demos-for-Events.pptx")
 prs.save(out); print("saved:", out, f"({len(prs.slides.__iter__.__self__._sldIdLst)} slides)")

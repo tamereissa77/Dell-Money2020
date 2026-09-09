@@ -77,6 +77,18 @@ make up
 The 2.5 GB dataset and the Python virtualenv are deliberately **not** in this repo —
 `make data` fetches the former, and the venv is machine-specific.
 
+## The deck
+
+`deck/GB10-Demos-for-Events.pptx` — the event deck covering all four demos.
+Rebuild it after changing a demo or re-capturing screenshots:
+
+```bash
+./financial-fraud-detection/.venv/bin/python deck/build_deck.py   # regenerate slides
+./financial-fraud-detection/.venv/bin/python deck/capture.py      # re-shoot the fraud UI
+```
+
+Brand assets live in `brand/` and are shared by the deck and the demo UIs.
+
 ## Adding a demo
 
 Drop it in as a subdirectory with its own `Makefile` exposing `up` and `down` (ideally also

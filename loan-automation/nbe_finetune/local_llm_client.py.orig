@@ -1,6 +1,7 @@
 import os
 import torch
 from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
+from peft import PeftModel
 from qwen_vl_utils import process_vision_info
 
 class LocalQwenLLM:
@@ -14,15 +15,10 @@ class LocalQwenLLM:
         # Adjust this path if you move this file into loan_processing!
         self.best_dir = os.path.join(os.path.dirname(__file__), "output", "checkpoints", "best")
         
-        # The LoRA adapter is optional: when it is present we apply it, otherwise we
-        # run the stock Qwen2.5-VL-7B-Instruct base. Set REQUIRE_ADAPTER=1 to fail
-        # loudly instead of silently falling back.
-        has_adapter = os.path.exists(self.best_dir)
-        if not has_adapter and os.getenv("REQUIRE_ADAPTER", "0") == "1":
+        if not os.path.exists(self.best_dir):
             raise FileNotFoundError(f"Best adapter not found at {self.best_dir}. Did training finish?")
 
-        print(f"[LocalQwenLLM] Loading Qwen2.5-VL-7B "
-              f"({'fine-tuned' if has_adapter else 'BASE — no adapter'}) into VRAM...", flush=True)
+        print(f"[LocalQwenLLM] Loading fine-tuned Native Vision model into VRAM...")
         self.processor = AutoProcessor.from_pretrained(self.model_id, trust_remote_code=True)
         base_model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             self.model_id,
@@ -31,16 +27,9 @@ class LocalQwenLLM:
             attn_implementation="sdpa",
             trust_remote_code=True
         )
-        if has_adapter:
-            from peft import PeftModel
-            self.model = PeftModel.from_pretrained(base_model, self.best_dir)
-            print("[LocalQwenLLM] LoRA adapter applied.", flush=True)
-        else:
-            self.model = base_model
-            print("[LocalQwenLLM] Running BASE model (no fine-tuning applied).", flush=True)
+        self.model = PeftModel.from_pretrained(base_model, self.best_dir)
         self.model.eval()
-        self.using_adapter = has_adapter
-        print("[LocalQwenLLM] Model loaded successfully!", flush=True)
+        print("[LocalQwenLLM] Model loaded successfully!")
 
     def invoke(self, messages):
         """
