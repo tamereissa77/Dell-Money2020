@@ -4,21 +4,26 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>نظام معالجة القروض الذكي</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet"/>
+    <!-- No web fonts: the demo must run with no network. System Arabic stack below. -->
     <style>
         :root {
-            --primary: #006633;
-            --primary-dark: #004d26;
-            --secondary: #c5a059;
-            --accent: #f37021;
-            --dark: #0a2a1b;
-            --light: #f8fafc;
-            --white: #ffffff;
-            --glass: rgba(255, 255, 255, 0.9);
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 15px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 30px rgba(0,0,0,0.15);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            /* matched to the fraud + document demos */
+            --bg:#0a0e13; --panel:#111820; --panel2:#161f2a; --panel3:#1b2634;
+            --line:#22303f; --line2:#2d3d4f;
+            --txt:#e8eef5; --dim:#8ba0b6;
+            --primary:#76b900; --primary-dark:#5b8f00;
+            --secondary:#0076CE; --accent:#ffa502;
+            --ok:#76b900; --err:#ff4757;
+            --dark:#e8eef5;                 /* legacy alias: text colour */
+            --light:#161f2a;                /* legacy alias: raised surface */
+            --white:#111820;                /* legacy alias: card surface */
+            --glass:rgba(22,31,42,.92);
+            --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+            --shadow-md:0 4px 14px rgba(0,0,0,.45);
+            --shadow-lg:0 10px 30px rgba(0,0,0,.55);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --sans: "Segoe UI Variable Text","Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue","Noto Sans","Noto Sans Arabic","Dubai",Tahoma,Arial,sans-serif;
+            --mono: ui-monospace,"SF Mono",Menlo,Consolas,monospace;
         }
 
         * {
@@ -28,13 +33,39 @@
         }
 
         body {
-            font-family: 'Cairo', sans-serif;
-            background: linear-gradient(135deg, #f0f4f2 0%, #e8efec 100%);
+            font-family: var(--sans);
+            background: var(--bg);
             min-height: 100vh;
-            color: var(--dark);
+            color: var(--txt);
             direction: rtl;
-            line-height: 1.6;
+            line-height: 1.75;
+            font-weight: 400;
+            letter-spacing: .002em;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
+        /* Dell-blue to NVIDIA-green rule across the top, as in the other demos */
+        body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;
+            background:linear-gradient(90deg,#0076CE 0%,#0076CE 48%,#76b900 52%,#76b900 100%)}
+
+        /* Browser defaults make h1-h6, strong, b, th and labels bold (700).
+           Nothing on this page should exceed 500. */
+        h1,h2,h3,h4,h5,h6{font-weight:500;letter-spacing:-.01em}
+        h1{font-weight:450}
+        strong,b,th,label,legend,optgroup,dt{font-weight:450}
+        button,input,select,textarea{font-weight:400;font-family:inherit}
+        .step-label,.step-circle{font-weight:450}
+
+        .lc-icon svg{width:34px;height:34px;stroke-width:1.4;display:block;margin:0 auto}
+        h2 .icon svg{width:20px;height:20px;vertical-align:-3px;display:inline-block}
+        .lc-icon{color:var(--primary)}
+        .card:hover .lc-icon{color:var(--primary)}
+
+        .cobrand{display:flex;align-items:center;gap:1.1rem;direction:ltr}
+        .cobrand img{display:block;width:auto}
+        .cb-dell{height:26px}
+        .cb-nv{height:40px}
+        .cb-sep{width:1px;height:28px;background:var(--line2)}
 
         /* ── HEADER ── */
         header {
@@ -70,7 +101,7 @@
 
         .header-text h1 {
             font-size: 1.4rem;
-            font-weight: 900;
+            font-weight: 500;
             color: var(--primary);
             margin-bottom: -2px;
         }
@@ -78,7 +109,7 @@
         .header-text p {
             font-size: 0.8rem;
             color: var(--secondary);
-            font-weight: 700;
+            font-weight: 450;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -104,7 +135,7 @@
             left: 0;
             right: 0;
             height: 3px;
-            background: #e2e8f0;
+            background: var(--line);
             z-index: 0;
         }
 
@@ -124,11 +155,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 800;
+            font-weight: 500;
             font-size: 1rem;
             background: var(--white);
-            border: 3px solid #e2e8f0;
-            color: #94a3b8;
+            border: 3px solid var(--line);
+            color: var(--dim);
             transition: var(--transition);
         }
 
@@ -148,15 +179,15 @@
 
         .step-label {
             font-size: 0.85rem;
-            color: #64748b;
+            color: var(--dim);
             margin-top: 0.75rem;
-            font-weight: 700;
+            font-weight: 450;
             transition: var(--transition);
         }
 
         .step.active .step-label {
             color: var(--primary);
-            font-weight: 800;
+            font-weight: 500;
         }
 
         /* ── MAIN CONTAINER ── */
@@ -184,7 +215,7 @@
 
         .card h2 {
             font-size: 1.6rem;
-            font-weight: 900;
+            font-weight: 500;
             color: var(--primary);
             margin-bottom: 0.5rem;
             display: flex;
@@ -193,7 +224,7 @@
         }
 
         .card h2 .icon {
-            background: #eef7f2;
+            background: var(--panel2);
             padding: 0.5rem;
             border-radius: 12px;
             color: var(--primary);
@@ -201,7 +232,7 @@
 
         .card .sub {
             font-size: 1rem;
-            color: #64748b;
+            color: var(--dim);
             margin-bottom: 2rem;
         }
 
@@ -235,7 +266,7 @@
 
         .loan-card.selected {
             border-color: var(--primary);
-            background: #eef7f2;
+            background: var(--panel2);
             box-shadow: 0 0 0 2px var(--primary);
         }
 
@@ -246,14 +277,14 @@
 
         .loan-card .lc-name {
             font-size: 1rem;
-            font-weight: 800;
+            font-weight: 500;
             color: var(--dark);
         }
 
         /* ── DOCS LIST ── */
         .doc-item {
             background: var(--white);
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--line);
             border-radius: 16px;
             margin-bottom: 1rem;
             transition: var(--transition);
@@ -275,12 +306,12 @@
             width: 32px;
             height: 32px;
             border-radius: 8px;
-            background: #eef7f2;
+            background: var(--panel2);
             color: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 800;
+            font-weight: 500;
         }
 
         .doc-info {
@@ -288,18 +319,18 @@
         }
 
         .doc-name {
-            font-weight: 800;
+            font-weight: 500;
             font-size: 1.05rem;
         }
 
         .doc-cond {
             font-size: 0.85rem;
-            color: #64748b;
+            color: var(--dim);
         }
 
         .doc-toggle {
             color: var(--accent);
-            font-weight: 700;
+            font-weight: 450;
             font-size: 0.9rem;
             cursor: pointer;
             text-decoration: underline;
@@ -329,13 +360,13 @@
 
         .form-group label {
             font-size: 0.9rem;
-            font-weight: 800;
+            font-weight: 500;
             color: var(--primary);
         }
 
         .form-group input, .form-group select {
             padding: 0.75rem 1rem;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--line);
             border-radius: 12px;
             font-family: inherit;
             font-size: 1rem;
@@ -358,7 +389,7 @@
         .btn {
             padding: 1rem 2.5rem;
             border-radius: 14px;
-            font-weight: 900;
+            font-weight: 500;
             font-size: 1.1rem;
             cursor: pointer;
             transition: var(--transition);
@@ -382,7 +413,7 @@
         }
 
         .btn-primary:disabled {
-            background: #cbd5e1;
+            background: var(--line2);
             cursor: not-allowed;
         }
 
@@ -393,7 +424,7 @@
         }
 
         .btn-outline:hover {
-            background: #eef7f2;
+            background: var(--panel2);
         }
 
         /* ── RESULT ── */
@@ -406,9 +437,9 @@
             overflow: hidden;
         }
 
-        .result-card.approve { background: #ecfdf5; border: 2px solid #10b981; }
-        .result-card.reject { background: #fef2f2; border: 2px solid #ef4444; }
-        .result-card.manual { background: #fffbeb; border: 2px solid #f59e0b; }
+        .result-card.approve { background: #ecfdf5; border: 2px solid var(--primary); }
+        .result-card.reject { background: #fef2f2; border: 2px solid var(--err); }
+        .result-card.manual { background: #fffbeb; border: 2px solid var(--accent); }
 
         .result-header {
             display: flex;
@@ -423,7 +454,7 @@
 
         .result-title {
             font-size: 2rem;
-            font-weight: 900;
+            font-weight: 500;
         }
 
         .score-display {
@@ -437,13 +468,13 @@
 
         .score-value {
             font-size: 3rem;
-            font-weight: 900;
+            font-weight: 500;
             color: var(--primary);
         }
 
         .score-label {
-            font-weight: 700;
-            color: #64748b;
+            font-weight: 450;
+            color: var(--dim);
         }
 
         /* ── VALIDATION ALERTS ── */
@@ -455,8 +486,8 @@
         }
 
         .validation-alert-item {
-            background: #fff5f5;
-            border-right: 5px solid #ef4444;
+            background: rgba(255,71,87,.12);
+            border-right: 5px solid var(--err);
             border-left: none;
             border-radius: 12px;
             padding: 1rem 1.5rem;
@@ -468,9 +499,9 @@
         }
 
         @keyframes pulseAlert {
-            0% { border-color: #ef4444; background: #fff5f5; }
+            0% { border-color: var(--err); background: rgba(255,71,87,.12); }
             50% { border-color: #fda4af; background: #fff8f8; }
-            100% { border-color: #ef4444; background: #fff5f5; }
+            100% { border-color: var(--err); background: rgba(255,71,87,.12); }
         }
 
         .validation-alert-icon {
@@ -484,7 +515,7 @@
         }
 
         .validation-alert-text {
-            font-weight: 800;
+            font-weight: 500;
             color: #991b1b;
             font-size: 1.05rem;
         }
@@ -502,7 +533,7 @@
         .spinner {
             width: 80px;
             height: 80px;
-            border: 8px solid #eef7f2;
+            border: 8px solid var(--panel2);
             border-top: 8px solid var(--primary);
             border-radius: 50%;
             animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
@@ -524,11 +555,10 @@
         </div>
     </div>
     <div style="display: flex; align-items: center; gap: 1.5rem;">
-        <a href="http://127.0.0.1:8000" target="_blank" style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #006633, #004d26); color: white; padding: 0.5rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 0.85rem; box-shadow: 0 4px 12px rgba(0,102,51,0.25); transition: all 0.3s ease;">
-            <span>🔬 أداة اختبار الاستخراج المباشر (Port 8000)</span>
-        </a>
-        <div style="font-weight: 800; color: var(--primary); opacity: 0.5;">
-            Smart Loan Portal
+        <div class="cobrand">
+            <img src="/static/images/dell-technologies-white.png" alt="Dell Technologies" class="cb-dell"/>
+            <span class="cb-sep"></span>
+            <img src="/static/images/nvidia-white.png" alt="NVIDIA" class="cb-nv"/>
         </div>
     </div>
 </header>
@@ -558,10 +588,10 @@
 
     <!-- STEP 1: Loan Type -->
     <div class="card" id="step1">
-        <h2><span class="icon">📋</span> اختر نوع القرض</h2>
+        <h2><span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1Z"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/></svg></span> اختر نوع القرض</h2>
         <p class="sub">نحن هنا لمساعدتك في اختيار التمويل الأمثل لاحتياجاتك</p>
         <div class="loan-grid" id="loanGrid">
-            <div style="color:#94a3b8; font-weight: 700;">جارٍ تحميل أنواع القروض...</div>
+            <div style="color:var(--dim); font-weight: 450;">جارٍ تحميل أنواع القروض...</div>
         </div>
         <div class="btn-row">
             <button class="btn btn-primary" id="btn1" disabled onclick="goStep2()">التالي &larr;</button>
@@ -605,7 +635,7 @@
     <div class="spinner-wrap" id="spinner">
         <div class="spinner"></div>
         <h3>جارٍ تحليل المستندات والبيانات...</h3>
-        <p style="color: #64748b; margin-top: 1rem;">نستخدم تقنيات الذكاء الاصطناعي لضمان معالجة فورية لطلبك</p>
+        <p style="color: var(--dim); margin-top: 1rem;">نستخدم تقنيات الذكاء الاصطناعي لضمان معالجة فورية لطلبك</p>
     </div>
 
     <!-- STEP 4: Result -->
@@ -621,20 +651,20 @@
     fetch('/api/loan-types').then(r=>r.json()).then(data=>{
         loanTypes = data;
         const icons = {
-            'car':'🚗',
-            'personal_default_income':'💼',
-            'personal_doctors':'🩺',
-            'personal_pension':'👴',
-            'personal_freelance':'🧑‍💻',
-            'personal_salary_secured':'🏢',
-            'personal_salary_unsecured':'📄'
+            'car': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l1.5-4.2A2 2 0 0 1 8.4 7.5h7.2a2 2 0 0 1 1.9 1.3L19 13"/><path d="M4 13h16a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1Z"/><circle cx="7.5" cy="18.5" r="1.5"/><circle cx="16.5" cy="18.5" r="1.5"/></svg>`,
+            'personal_default_income': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="18" height="12" rx="2"/><path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5"/><path d="M3 12.5h18"/></svg>`,
+            'personal_doctors': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v5a4 4 0 0 0 8 0V3"/><path d="M6 3H4.5M14 3h1.5"/><path d="M10 16v-4"/><path d="M10 16a4 4 0 0 0 8 0v-1.5"/><circle cx="18" cy="12" r="2"/></svg>`,
+            'personal_pension': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10M7 21h10"/><path d="M7 3c0 4 5 5 5 9s-5 5-5 9"/><path d="M17 3c0 4-5 5-5 9s5 5 5 9"/></svg>`,
+            'personal_freelance': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2.5 19.5h19"/></svg>`,
+            'personal_salary_secured': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16"/><path d="M15 10h3a1 1 0 0 1 1 1v10"/><path d="M3 21h18"/><path d="M8 8h3M8 12h3M8 16h3"/></svg>`,
+            'personal_salary_unsecured': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>`
         };
         const grid = document.getElementById('loanGrid');
         grid.innerHTML = '';
         data.forEach(lt=>{
             const div = document.createElement('div');
             div.className='loan-card';
-            div.innerHTML=`<div class="lc-icon">${icons[lt.key]||'🏦'}</div><div class="lc-name">${lt.display}</div>`;
+            div.innerHTML=`<div class="lc-icon">${icons[lt.key]||`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 5l9 5.5"/><path d="M5 10.5V19M9.6 10.5V19M14.4 10.5V19M19 10.5V19"/><path d="M3 21h18"/></svg>`}</div><div class="lc-name">${lt.display}</div>`;
             div.onclick=()=>selectLoan(lt.key, div);
             grid.appendChild(div);
         });
@@ -673,12 +703,12 @@
             const uploadHtml = isID ? `
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
                     <div>
-                        <label style="font-size: 0.8rem; font-weight: 800; display: block; margin-bottom: 0.5rem;">البطاقة (الوجه الأمامي)</label>
+                        <label style="font-size: 0.8rem; font-weight: 500; display: block; margin-bottom: 0.5rem;">البطاقة (الوجه الأمامي)</label>
                         <input type="file" id="df_${doc.key}_front" accept="image/*" onchange="handleFileSelectSplit('${doc.key}', 'front')" />
                         <div id="dp_${doc.key}_front" style="display:none; margin-top: 0.5rem;"><img id="img_${doc.key}_front" style="width:100%; border-radius:12px;"></div>
                     </div>
                     <div>
-                        <label style="font-size: 0.8rem; font-weight: 800; display: block; margin-bottom: 0.5rem;">البطاقة (الوجه الخلفي)</label>
+                        <label style="font-size: 0.8rem; font-weight: 500; display: block; margin-bottom: 0.5rem;">البطاقة (الوجه الخلفي)</label>
                         <input type="file" id="df_${doc.key}_back" accept="image/*" onchange="handleFileSelectSplit('${doc.key}', 'back')" />
                         <div id="dp_${doc.key}_back" style="display:none; margin-top: 0.5rem;"><img id="img_${doc.key}_back" style="width:100%; border-radius:12px;"></div>
                     </div>
@@ -779,7 +809,7 @@
         if(imgElement) imgElement.src = dataUrl;
         if(previewDiv) previewDiv.style.display = 'block';
         if(di) di.classList.add('has-content');
-        if(tog) { tog.innerHTML='✅ تم الرفع'; tog.style.color='#10b981'; }
+        if(tog) { tog.innerHTML='✅ تم الرفع'; tog.style.color='var(--primary)'; }
     }
 
     function setDocImageSplit(key, side, dataUrl) {
@@ -803,7 +833,7 @@
         if (front && back && di && tog) {
             di.classList.add('has-content');
             tog.innerHTML='✅ تم الرفع';
-            tog.style.color='#10b981';
+            tog.style.color='var(--primary)';
         }
     }
 
@@ -830,7 +860,7 @@
                 if(imgElement) imgElement.src = e.target.result;
                 if(previewDiv) previewDiv.style.display = 'block';
                 if(di) di.classList.add('has-content');
-                if(tog) { tog.innerHTML='✅ تم الرفع'; tog.style.color='#10b981'; }
+                if(tog) { tog.innerHTML='✅ تم الرفع'; tog.style.color='var(--primary)'; }
                 checkDocs();
             };
             reader.readAsDataURL(fileInput.files[0]);
@@ -862,7 +892,7 @@
                 if (front && back && di && tog) {
                     di.classList.add('has-content');
                     tog.innerHTML='✅ تم الرفع';
-                    tog.style.color='#10b981';
+                    tog.style.color='var(--primary)';
                 }
                 checkDocs();
             };
@@ -1011,11 +1041,11 @@
         for(const [name, info] of Object.entries(valMap)){
             const displayTitle = docNames[name] || name;
             const pct = Math.round((info.overall_score !== undefined ? info.overall_score : info.score || 0)*100);
-            const barColor = pct >= 75 ? '#10b981' : (pct > 0 ? '#f59e0b' : '#ef4444');
+            const barColor = pct >= 75 ? 'var(--primary)' : (pct > 0 ? 'var(--accent)' : 'var(--err)');
             
             let bulletsHtml = '';
             if (info.reasons && info.reasons.length > 0) {
-                bulletsHtml = '<div style="margin-top: 0.75rem; background: #f8fafc; padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid #e2e8f0;"><ul style="padding-right: 1.25rem; color: #334155; font-size: 0.95rem; font-weight: 700; list-style-type: none;">';
+                bulletsHtml = '<div style="margin-top: 0.75rem; background: var(--panel2); padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid var(--line);"><ul style="padding-right: 1.25rem; color: #334155; font-size: 0.95rem; font-weight: 450; list-style-type: none;">';
                 info.reasons.forEach(reason => {
                     let icon = (reason.includes('اختلاف') || reason.includes('خطأ') || reason.includes('ناقصة') || reason.includes('غير المفعول') || reason.includes('مرفوض')) ? '❌ ' : (reason.includes('بنجاح') ? '✅ ' : '🔸 ');
                     bulletsHtml += `<li style="margin-bottom: 0.4rem; line-height: 1.5;">${icon}${reason}</li>`;
@@ -1025,11 +1055,11 @@
 
             detailsHtml += `
                 <div style="margin-bottom:1.75rem;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-weight:800; font-size: 1.05rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-weight: 500; font-size: 1.05rem;">
                         <span>📄 ${displayTitle}</span>
                         <span style="color:${barColor}">${pct}%</span>
                     </div>
-                    <div style="height:12px; background:#e2e8f0; border-radius:6px; overflow:hidden;">
+                    <div style="height:12px; background:var(--line); border-radius:6px; overflow:hidden;">
                         <div style="height:100%; background:${barColor}; width:0%; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);" data-pct="${pct}%"></div>
                     </div>
                     ${bulletsHtml}
@@ -1043,7 +1073,7 @@
                     <div class="result-icon">${config.icon}</div>
                     <div>
                         <div class="result-title">${config.title}</div>
-                        <p style="color:#64748b; font-weight:700;">شكراً لاستخدامكم نظام معالجة القروض</p>
+                        <p style="color:var(--dim); font-weight: 450;">شكراً لاستخدامكم نظام معالجة القروض</p>
                     </div>
                 </div>
                 ${alertsHtml}
@@ -1051,11 +1081,11 @@
                     <div class="score-label">درجة استيفاء الشروط الإجمالية</div>
                     <div class="score-value">${Math.round(score*100)}%</div>
                 </div>
-                <div class="card" style="background:var(--white); box-shadow:none; border:1px solid #e2e8f0;">
+                <div class="card" style="background:var(--white); box-shadow:none; border:1px solid var(--line);">
                     <h3 style="margin-bottom:1.5rem; color:var(--primary);">تفاصيل التحليل</h3>
                     ${detailsHtml}
                 </div>
-                ${missing.length ? `<div style="background:#fee2e2; padding:1rem; border-radius:12px; color:#b91c1c; font-weight:700; margin-top:1rem;">⚠️ مستندات مطلوبة: ${missing.join(', ')}</div>` : ''}
+                ${missing.length ? `<div style="background:#fee2e2; padding:1rem; border-radius:12px; color:#b91c1c; font-weight: 450; margin-top:1rem;">⚠️ مستندات مطلوبة: ${missing.join(', ')}</div>` : ''}
             </div>
             <div class="btn-row">
                 <button class="btn btn-primary" onclick="location.reload()">🔄 طلب جديد</button>

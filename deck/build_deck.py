@@ -174,7 +174,7 @@ rows = [
  ("Loan origination", C_DELL,
   "A 7B vision-language model reading identity and income documents, with a state "
   "machine driving approval and deterministic cross-document fraud checks.",
-  "Qwen2.5-VL-7B · 8 services"),
+  "fine-tuned Qwen2.5-VL-7B"),
 ]
 y = Inches(2.0)
 for name, col, body, metric in rows:
@@ -454,32 +454,25 @@ line(tf, "A vision-language model reading the documents a loan officer reads, an
 notes(s, "Retail banking. Pairs naturally with document intelligence - same box, deeper workflow.")
 
 s = slide(); header(s, "Loan origination", "From document upload to an auditable decision")
-stages = [
- ("01", "Capture", "Applicant uploads identity and income documents — national ID, "
-                    "employer letter, tax card, utility bill."),
- ("02", "Read", "A 7B vision-language model reads each document natively. No OCR-then-parse "
-                 "pipeline, no template per document type."),
- ("03", "Cross-check", "Deterministic validation across documents: does the name on the ID match "
-                        "the employer letter, does declared income match the tax card. Arithmetic, not inference."),
- ("04", "Decide", "A state machine walks the approval path and records why — every step "
-                   "reconstructable for an auditor."),
-]
-y = Inches(2.1)
+picture(s, "loan-ui.png", Inches(0.8), Inches(2.05), w=Inches(7.3))
+tfx = tb(s, Inches(8.4), Inches(2.1), Inches(4.1), Inches(4.5))
+stages = [("01","Capture","Applicant uploads identity and income documents."),
+          ("02","Read","A fine-tuned 7B vision model reads each one natively — no OCR-then-parse, no per-template rules."),
+          ("03","Cross-check","Deterministic validation across documents: name, employer, declared income."),
+          ("04","Decide","A state machine walks the approval path and records why.")]
+first = True
 for num, title, body in stages:
-    tfn = tb(s, Inches(0.8), y, Inches(0.7), Inches(0.5))
-    line(tfn, num, 15, C_DELLL, True, MONO, 0, first=True)
-    tft = tb(s, Inches(1.6), y - Emu(20000), Inches(2.3), Inches(0.5))
-    line(tft, title, 15, C_TEXT, True, SANS, 0, first=True)
-    tfb = tb(s, Inches(4.1), y - Emu(20000), Inches(8.4), Inches(0.9))
-    line(tfb, body, 12.5, C_DIM, False, SANS, 0, first=True)
-    y += Inches(1.02)
-panel(s, Inches(0.8), Inches(6.2), Inches(11.7), Inches(0.62))
-tfc = tb(s, Inches(1.1), Inches(6.36), Inches(11.1), Inches(0.4))
-line(tfc, "Why it matters here:  the fraud checks are arithmetic, not model output — "
-          "so the model can be wrong without the decision being unsafe.",
-     13, C_GREEN, True, SANS, 0, first=True)
+    line(tfx, f"{num}   {title}", 13.5, C_DELLL, True, MONO, 3, first=first); first = False
+    line(tfx, body, 12, C_DIM, False, SANS, 11)
+line(tfx, "Fine-tuned on Egyptian documents:\nLoRA r=64, 4 epochs, eval loss 0.139,\non Qwen2.5-VL-7B-Instruct.",
+     11.5, C_TEXT, False, MONO, 0)
+panel(s, Inches(0.8), Inches(6.45), Inches(11.7), Inches(0.6))
+tfc = tb(s, Inches(1.1), Inches(6.6), Inches(11.1), Inches(0.4))
+line(tfc, "The cross-document checks are arithmetic, not model output — so the model can be wrong "
+          "without the decision being unsafe.", 13, C_GREEN, True, SANS, 0, first=True)
 notes(s, "The deterministic cross-document check is the strongest point for a regulated buyer: "
-         "the LLM extracts, but the decision rests on arithmetic that cannot hallucinate.")
+         "the model extracts, but the decision rests on arithmetic that cannot hallucinate. "
+         "Adapter status is visible at /health - confirm it says '+ LoRA' before demoing.")
 
 # ---------------------------------------------------------------- 13 sovereign
 s = slide(); header(s, "Why it runs on one box", "Data residency without a cloud dependency")

@@ -215,6 +215,26 @@ def normalize_results(result, doc_type):
 
     return final_data
 
+@app.get("/health")
+def health():
+    """Reports whether the fine-tuned LoRA adapter is actually loaded.
+
+    The service falls back to the stock Qwen2.5-VL-7B base when the adapter is
+    absent, which is easy to miss — extraction quality drops but nothing errors.
+    Check this before demoing.
+    """
+    import os
+    # api.py sits at /app/api.py and the adapter mounts at /app/output/checkpoints/best
+    best = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", "checkpoints", "best")
+    llm = globals().get("llm") or globals().get("LLM")
+    using = getattr(llm, "using_adapter", None) if llm is not None else None
+    return {
+        "status": "ok",
+        "adapter_present": os.path.isdir(best),
+        "adapter_loaded": using,
+        "model": "Qwen2.5-VL-7B-Instruct" + (" + LoRA" if using else " (BASE — not fine-tuned)"),
+    }
+
 @app.post("/prompt")
 async def process_prompt(request: dict):
     try:

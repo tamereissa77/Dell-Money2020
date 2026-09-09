@@ -12,3 +12,8 @@ uploads/
 
 # HuggingFace model cache (16GB, fetched separately)
 hf-cache/
+
+# Partner-supplied sample documents. These appear to be a real individual's
+# identity papers (national ID, bank statement, HR letter) — they must never be
+# published. Obtain them from Efadatek directly.
+shared_data/

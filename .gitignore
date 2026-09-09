@@ -23,3 +23,7 @@
 # editor/working backups
 *.bak
 *.pre-restyle
+
+# deck working files (keep the PDF, drop scratch renders)
+deck/preview/*
+!deck/preview/*.pdf

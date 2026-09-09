@@ -1,16 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@200;400;700&display=swap');
+/* No web fonts: the demo must run with no network. */
 
 :root {
-    --bg-dark: #08090b;
-    --accent-primary: #8b5cf6;
-    --accent-secondary: #ec4899;
-    --accent-glow: rgba(139, 92, 246, 0.3);
-    --glass-bg: rgba(17, 25, 40, 0.75);
-    --glass-border: rgba(255, 255, 255, 0.125);
-    --text-main: #f3f4f6;
-    --text-dim: #9ca3af;
-    --card-gradient: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
-    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    /* matched to the fraud / document / portal demos */
+    --bg-dark: #0a0e13;
+    --accent-primary: #76b900;            /* NVIDIA green */
+    --accent-secondary: #0076CE;          /* Dell blue */
+    --accent-glow: rgba(118, 185, 0, 0.28);
+    --glass-bg: rgba(17, 24, 32, 0.92);
+    --glass-border: rgba(34, 48, 63, 0.9);
+    --text-main: #e8eef5;
+    --text-dim: #8ba0b6;
+    --card-gradient: linear-gradient(135deg, rgba(118,185,0,0.08) 0%, rgba(0,118,206,0.05) 100%);
+    --transition-smooth: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -22,9 +23,9 @@
 body {
     background-color: var(--bg-dark);
     background-image: 
-        radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.1) 0px, transparent 50%);
-    font-family: 'Plus Jakarta Sans', sans-serif;
+        radial-gradient(at 0% 0%, rgba(118, 185, 0, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(0, 118, 206, 0.1) 0px, transparent 50%);
+    font-family: system-ui, sans-serif;
     color: var(--text-main);
     min-height: 100vh;
     overflow-x: hidden;
@@ -62,7 +63,7 @@ header {
 }
 
 h1 {
-    font-family: 'Outfit', sans-serif;
+    font-family: system-ui, sans-serif;
     font-size: 3rem;
     font-weight: 800;
     background: linear-gradient(to right, #fff, #9ca3af);
@@ -117,11 +118,11 @@ h1 {
 
 .upload-zone:hover {
     border-color: var(--accent-primary);
-    background: rgba(139, 92, 246, 0.05);
+    background: rgba(118, 185, 0, 0.05);
 }
 
 .upload-zone.drag-over {
-    background: rgba(139, 92, 246, 0.1);
+    background: rgba(118, 185, 0, 0.1);
     border-color: var(--accent-primary);
     transform: scale(1.02);
 }
@@ -207,7 +208,7 @@ h1 {
 .data-value {
     font-weight: 600;
     color: #fff;
-    font-family: 'Outfit', sans-serif;
+    font-family: system-ui, sans-serif;
 }
 
 .json-view {
@@ -217,7 +218,7 @@ h1 {
     border-radius: 12px;
     font-family: 'Monaco', 'Consolas', monospace;
     font-size: 0.85rem;
-    color: #79c0ff;
+    color: #4aa8e8;
     overflow-x: auto;
     border: 1px solid var(--glass-border);
     display: none;
