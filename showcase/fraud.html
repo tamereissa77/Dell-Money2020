@@ -62,18 +62,171 @@ the wrong measure here, and why the cost of a false alarm has to be weighed agai
 amounts, ordinary times, ordinary categories.</p>
 
 <div class="section-note">What the data actually says</div>
-<p>Measured during preprocessing of all 24.4 million rows — correlation with the fraud label:</p>
-<div class="bars">
-  <div class="bar-row hot"><span class="lbl">Merchant state</span><span class="bar-track"><i class="bar-fill" style="width:100%" data-w="100"></i></span><span class="bar-val">35.9%</span></div>
-  <div class="bar-row hot"><span class="lbl">Merchant identity</span><span class="bar-track"><i class="bar-fill" style="width:97%" data-w="97"></i></span><span class="bar-val">34.9%</span></div>
-  <div class="bar-row hot"><span class="lbl">Merchant city</span><span class="bar-track"><i class="bar-fill" style="width:91%" data-w="91"></i></span><span class="bar-val">32.5%</span></div>
-  <div class="bar-row"><span class="lbl">Postal code</span><span class="bar-track"><i class="bar-fill" style="width:42%" data-w="42"></i></span><span class="bar-val">15.0%</span></div>
-  <div class="bar-row"><span class="lbl">Merchant category</span><span class="bar-track"><i class="bar-fill" style="width:35%" data-w="35"></i></span><span class="bar-val">12.7%</span></div>
-  <div class="bar-row"><span class="lbl">Cardholder history</span><span class="bar-track"><i class="bar-fill" style="width:18%" data-w="18"></i></span><span class="bar-val">6.6%</span></div>
-  <div class="bar-row"><span class="lbl">Day of month</span><span class="bar-track"><i class="bar-fill" style="width:3%" data-w="1"></i></span><span class="bar-val">0.3%</span></div>
+<div class="data-feature-card" data-animate>
+  <div class="dfc-header">
+    <div class="dfc-title-group">
+      <div class="dfc-badge"><span class="dot"></span> Feature Correlation Analysis</div>
+      <div class="dfc-headline">Signal Power Across 24,386,900 Preprocessed Transactions</div>
+      <p class="dfc-sub">Mutual information correlation with the ground-truth fraud label (0.122% positive class):</p>
+    </div>
+    <div class="dfc-legend">
+      <span class="dfc-legend-item hot"><span class="legend-pip hot"></span> Graph Entity (High Signal)</span>
+      <span class="dfc-legend-item cold"><span class="legend-pip cold"></span> Tabular Feature (Weak / Noise)</span>
+    </div>
+  </div>
+
+  <div class="dfc-body">
+    <!-- Group 1: Relational & Graph Signals -->
+    <div class="dfc-group-label">
+      <span>TOPOLOGICAL &amp; ENTITY SIGNALS (GRAPH DOMAIN)</span>
+      <span class="dfc-group-tag hot">Top Predictors</span>
+    </div>
+
+    <div class="dfc-row hot">
+      <div class="dfc-meta">
+        <span class="dfc-rank">01</span>
+        <span class="dfc-name">Merchant state</span>
+        <span class="dfc-type-pill">Spatial Graph Node</span>
+      </div>
+      <div class="dfc-bar-wrap">
+        <div class="dfc-track">
+          <div class="dfc-fill hot" style="width:100%" data-w="100">
+            <span class="dfc-fill-glow"></span>
+          </div>
+        </div>
+      </div>
+      <div class="dfc-val-wrap">
+        <span class="dfc-val hot">35.9%</span>
+        <span class="dfc-signal-pill hot">PRIMARY</span>
+      </div>
+    </div>
+
+    <div class="dfc-row hot">
+      <div class="dfc-meta">
+        <span class="dfc-rank">02</span>
+        <span class="dfc-name">Merchant identity</span>
+        <span class="dfc-type-pill">Entity ID Node</span>
+      </div>
+      <div class="dfc-bar-wrap">
+        <div class="dfc-track">
+          <div class="dfc-fill hot" style="width:97%" data-w="97">
+            <span class="dfc-fill-glow"></span>
+          </div>
+        </div>
+      </div>
+      <div class="dfc-val-wrap">
+        <span class="dfc-val hot">34.9%</span>
+        <span class="dfc-signal-pill hot">HIGH</span>
+      </div>
+    </div>
+
+    <div class="dfc-row hot">
+      <div class="dfc-meta">
+        <span class="dfc-rank">03</span>
+        <span class="dfc-name">Merchant city</span>
+        <span class="dfc-type-pill">Geographic Cluster</span>
+      </div>
+      <div class="dfc-bar-wrap">
+        <div class="dfc-track">
+          <div class="dfc-fill hot" style="width:91%" data-w="91">
+            <span class="dfc-fill-glow"></span>
+          </div>
+        </div>
+      </div>
+      <div class="dfc-val-wrap">
+        <span class="dfc-val hot">32.5%</span>
+        <span class="dfc-signal-pill hot">HIGH</span>
+      </div>
+    </div>
+
+    <!-- Divider: The Tabular Drop-off -->
+    <div class="dfc-dropoff-divider">
+      <span class="dfc-divider-line"></span>
+      <span class="dfc-divider-text">CONVENTIONAL TABULAR ATTRIBUTES DROP BELOW 15% CORRELATION</span>
+      <span class="dfc-divider-line"></span>
+    </div>
+
+    <!-- Group 2: Tabular Signals -->
+    <div class="dfc-row">
+      <div class="dfc-meta">
+        <span class="dfc-rank dim">04</span>
+        <span class="dfc-name">Postal code</span>
+        <span class="dfc-type-pill dim">Local Attribute</span>
+      </div>
+      <div class="dfc-bar-wrap">
+        <div class="dfc-track">
+          <div class="dfc-fill tabular" style="width:42%" data-w="42"></div>
+        </div>
+      </div>
+      <div class="dfc-val-wrap">
+        <span class="dfc-val">15.0%</span>
+        <span class="dfc-signal-pill dim">MODERATE</span>
+      </div>
+    </div>
+
+    <div class="dfc-row">
+      <div class="dfc-meta">
+        <span class="dfc-rank dim">05</span>
+        <span class="dfc-name">Merchant category</span>
+        <span class="dfc-type-pill dim">MCC Code</span>
+      </div>
+      <div class="dfc-bar-wrap">
+        <div class="dfc-track">
+          <div class="dfc-fill tabular" style="width:35%" data-w="35"></div>
+        </div>
+      </div>
+      <div class="dfc-val-wrap">
+        <span class="dfc-val">12.7%</span>
+        <span class="dfc-signal-pill dim">LOW</span>
+      </div>
+    </div>
+
+    <div class="dfc-row">
+      <div class="dfc-meta">
+        <span class="dfc-rank dim">06</span>
+        <span class="dfc-name">Cardholder history</span>
+        <span class="dfc-type-pill dim">Aggregate Scalar</span>
+      </div>
+      <div class="dfc-bar-wrap">
+        <div class="dfc-track">
+          <div class="dfc-fill tabular" style="width:18%" data-w="18"></div>
+        </div>
+      </div>
+      <div class="dfc-val-wrap">
+        <span class="dfc-val">6.6%</span>
+        <span class="dfc-signal-pill dim">MARGINAL</span>
+      </div>
+    </div>
+
+    <div class="dfc-row">
+      <div class="dfc-meta">
+        <span class="dfc-rank dim">07</span>
+        <span class="dfc-name">Day of month</span>
+        <span class="dfc-type-pill dim">Timestamp</span>
+      </div>
+      <div class="dfc-bar-wrap">
+        <div class="dfc-track">
+          <div class="dfc-fill tabular" style="width:3%" data-w="3"></div>
+        </div>
+      </div>
+      <div class="dfc-val-wrap">
+        <span class="dfc-val">0.3%</span>
+        <span class="dfc-signal-pill dim">NOISE</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Executive Insight Callout -->
+  <div class="dfc-insight">
+    <div class="dfc-insight-icon">💡</div>
+    <div class="dfc-insight-content">
+      <strong>Why this demands a graph architecture:</strong>
+      The strongest signals are <em>entities and places</em> — not transaction amount, not timing.
+      A conventional tabular model inspects records in isolation and misses the syndicate rings connecting these entities.
+      Graph neural networks (GraphSAGE) score this relational topology directly in <strong>0.002 ms</strong>.
+    </div>
+  </div>
 </div>
-<p style="margin-top:1rem">The strongest signals are <strong>entities and places</strong> — not transaction amount,
-not timing. That is inherently a graph problem, which is why a conventional tabular model struggles.</p>
 
 <div class="section-note">The idea in one picture</div>
 <div class="diagram">
@@ -192,15 +345,44 @@ not timing. That is inherently a graph problem, which is why a conventional tabu
 
 <div class="section-note">How it works</div>
 <div class="steps">
-  <div class="step"><div class="num">01</div><div><h3>Build the graph</h3>
-    <p style="margin:0">Cardholders, transactions and merchants become nodes; every payment becomes
-    edges. 301,524 training transactions across 4,873 cardholders and 42,942 merchants.</p></div></div>
-  <div class="step"><div class="num">02</div><div><h3>Learn the neighbourhood</h3>
-    <p style="margin:0">A GraphSAGE network compresses each transaction <em>and its surroundings</em>
-    into a 32-dimensional embedding — so a transaction is represented by the company it keeps.</p></div></div>
-  <div class="step"><div class="num">03</div><div><h3>Classify and explain</h3>
-    <p style="margin:0">XGBoost scores those embeddings, and Shapley value sampling attributes each
-    decision back to human-readable features on demand.</p></div></div>
+  <div class="step">
+    <div class="step-top">
+      <div class="num">01</div>
+      <span class="step-badge">Stage 1 · Topology</span>
+    </div>
+    <h3>Build the graph</h3>
+    <p>Cardholders, transactions, and merchants become nodes; every payment becomes directed edges across <strong>301,524</strong> training transactions connecting <strong>4,873</strong> cardholders to <strong>42,942</strong> merchants.</p>
+    <div class="step-footer">
+      <span class="step-tag">Heterogeneous Bipartite Graph</span>
+      <span class="step-arrow">Next: GNN Convolution →</span>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-top">
+      <div class="num">02</div>
+      <span class="step-badge">Stage 2 · Embeddings</span>
+    </div>
+    <h3>Learn the neighbourhood</h3>
+    <p>A GraphSAGE network aggregates 2-hop neighborhood structures, compressing each transaction <em>and its surrounding subgraph</em> into a dense <strong>32-dimensional embedding</strong> — so a transaction is represented by the company it keeps.</p>
+    <div class="step-footer">
+      <span class="step-tag">32-dim GraphSAGE Vector</span>
+      <span class="step-arrow">Next: Scoring &amp; Audit →</span>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-top">
+      <div class="num">03</div>
+      <span class="step-badge">Stage 3 · Decision</span>
+    </div>
+    <h3>Classify and explain</h3>
+    <p>XGBoost scores those topological embeddings in <strong>0.002 ms</strong>, while fast Shapley value sampling attributes each decision back to human-readable features on demand.</p>
+    <div class="step-footer">
+      <span class="step-tag alt">XGBoost + Shapley Audit</span>
+      <span class="step-arrow" style="color:var(--green)">✓ 589k tx/s Live</span>
+    </div>
+  </div>
 </div>
 
 <div class="section-note">Measured on this machine</div>
@@ -222,40 +404,68 @@ not timing. That is inherently a graph problem, which is why a conventional tabu
   </div>
   <img src="assets/img/fraud-ui.jpg" alt="The live fraud detection interface">
 </div>
-<p>Transactions stream in at the left. A flagged one freezes in the centre with its real
-details. The attribution behind the decision appears on the right.</p>
+<div class="feature-split">
+  <div class="split-text">
+    <div class="dfc-badge"><span class="dot"></span> Explainable AI · Shapley Attribution</div>
+    <p>Transactions stream in at the left. When a high-risk pattern is detected, the transaction freezes in the centre with its topological details, while the feature attribution behind the decision appears on the right.</p>
 
-<p>A transaction of <strong>$98.04 at a clothing merchant in Rome</strong> is flagged at 98% confidence.
-Nothing about the amount is unusual. The explanation shows why: <strong>merchant city</strong> dominates
-the decision, while <strong>transaction amount contributes under 1%</strong> as much. A rules engine
-watching for large or irregular amounts drives straight past it.</p>
+    <div class="split-card">
+      <div class="split-card-header">
+        <span class="split-card-title">Flagged Transaction</span>
+        <span class="split-card-badge">98% CONFIDENCE</span>
+      </div>
+      <div class="split-card-tx">$98.04 at a clothing merchant in Rome</div>
+      <p class="split-card-desc">Nothing about the $98.04 amount is unusual. The explanation shows why: <strong>merchant city</strong> dominates the decision (+9.564 impact), while <strong>transaction amount contributes under 1%</strong> as much.</p>
+    </div>
 
-<div class="mockup">
-  <div class="mockup-bar">
-    <div class="mockup-dots"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span></div>
-    <div class="mockup-title">Shapley Attribution — Feature Importance Breakdown</div>
-    <span class="mockup-badge">EXPLAINABLE AI</span>
+    <div class="split-takeaway">
+      <strong>Why rules engines miss it:</strong> A rules engine watching for large or irregular amounts drives straight past this transaction. The GNN flags it because it connects directly to an entity cluster where other compromised cards transacted.
+    </div>
   </div>
-  <img src="assets/img/fraud-explain.jpg" alt="Shapley attribution for a flagged transaction">
+
+  <div class="split-media">
+    <div class="mockup">
+      <div class="mockup-bar">
+        <div class="mockup-dots"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span></div>
+        <div class="mockup-title">Shapley Attribution — Feature Importance Breakdown</div>
+        <span class="mockup-badge">EXPLAINABLE AI</span>
+      </div>
+      <img src="assets/img/fraud-explain.jpg" alt="Shapley attribution for a flagged transaction">
+    </div>
+  </div>
 </div>
 
 <div class="section-note">Beyond supervised learning</div>
-<p>A second tab shows a different model entirely: a <strong>29-million-parameter transaction foundation
-model</strong> with a 6,251-token financial vocabulary, trained only to predict a cardholder's next
-transaction — never shown a fraud label. Projected into two dimensions, fraud still clusters.</p>
+<div class="feature-split">
+  <div class="split-text">
+    <div class="dfc-badge"><span class="dot"></span> Unsupervised Representation · 29M Parameters</div>
+    <p>A second tab demonstrates an unsupervised architecture: a <strong>29-million-parameter transaction foundation model</strong> with a 6,251-token financial vocabulary, trained purely to predict a cardholder's next transaction — without ever seeing a fraud label.</p>
 
-<div class="mockup">
-  <div class="mockup-bar">
-    <div class="mockup-dots"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span></div>
-    <div class="mockup-title">Transaction Foundation Model — 2D Embedding Projection</div>
-    <span class="mockup-badge">29M PARAMETERS</span>
+    <div class="split-card" style="border-left-color: #76b900; border-color: rgba(118, 185, 0, 0.3)">
+      <div class="split-card-header">
+        <span class="split-card-title" style="color: var(--green)">Foundation Model Impact</span>
+        <span class="split-card-badge" style="background: rgba(118, 185, 0, 0.18); color: #a3e635; border-color: rgba(118, 185, 0, 0.35)">+26.9% PRECISION</span>
+      </div>
+      <div class="split-card-tx">Autonomous Unsupervised Clustering</div>
+      <p class="split-card-desc">When projected into two dimensions across 59,123 transaction points, fraud forms dense geometric clusters on its own. Adding these learned embeddings to production fraud features lifted average precision by <strong>26.9%</strong> — catching the same fraud with substantially fewer false alarms.</p>
+    </div>
+
+    <div class="split-takeaway">
+      <strong>Said plainly:</strong> The foundation embeddings alone score worse than domain features. They <em>complement</em> graph feature engineering rather than replacing it.
+    </div>
   </div>
-  <img src="assets/img/fraud-embed.jpg" alt="Transaction embedding space">
+
+  <div class="split-media">
+    <div class="mockup">
+      <div class="mockup-bar">
+        <div class="mockup-dots"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span></div>
+        <div class="mockup-title">Transaction Foundation Model — 2D Embedding Projection</div>
+        <span class="mockup-badge">29M PARAMETERS</span>
+      </div>
+      <img src="assets/img/fraud-embed.jpg" alt="Transaction embedding space showing autonomous fraud clustering">
+    </div>
+  </div>
 </div>
-<p>Adding those embeddings to the production fraud features lifted average precision by
-<strong>26.9%</strong> — fewer false alarms at the same catch rate.</p>
-<div class="note"><b>Said plainly</b><p>The embeddings alone score far worse than ordinary features.
-They complement feature engineering; they do not replace it.</p></div>
 
 <div class="section-note">Why a rules engine misses it</div>
 <div class="vs">
@@ -303,12 +513,13 @@ document.querySelectorAll('a[href^="http://localhost:"]').forEach(a=>{
 });
 const io = new IntersectionObserver((es)=>{
   es.forEach(e=>{ if(!e.isIntersecting) return;
-    e.target.querySelectorAll('.bar-fill').forEach((b,i)=>{
-      setTimeout(()=>{ b.style.width = b.dataset.w + '%'; }, i*70);
+    e.target.querySelectorAll('.bar-fill, .dfc-fill').forEach((b,i)=>{
+      b.style.width = '0%';
+      setTimeout(()=>{ b.style.width = (b.dataset.w || 100) + '%'; }, 80 + i*60);
     });
     io.unobserve(e.target);
   });
-},{threshold:.25});
+},{threshold:.15});
 document.querySelectorAll('[data-animate]').forEach(el=>io.observe(el));
 </script>
 </div>

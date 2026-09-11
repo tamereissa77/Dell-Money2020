@@ -32,27 +32,27 @@
 <div class="content">
 
 <main>
-  <section class="hero">
-    <div class="eyebrow">Dell Technologies Showcase · Money20/20 Middle East · Riyadh</div>
-    <h1>AI use cases for financial services</h1>
-    <p class="lede">Six problems banks actually have — card fraud, tail risk, Arabic paperwork,
-      loan origination, branch video and operational incidents — each solved by a working system
-      rather than a slide. <strong>Five of them run entirely on the single Dell AI Appliance on this
-      table</strong> (powered by NVIDIA Grace Blackwell GB10): the data, the models and the inference. Nothing is sent anywhere, and we can
-      unplug the network cable and keep going.</p>
-    <div class="chips">
-      <span class="chip on"><span class="dot"></span>Five running on-device</span>
-      <span class="chip"><b>Workstation</b>Dell PowerEdge AI</span>
-      <span class="chip"><b>Superchip</b>NVIDIA GB10 · Blackwell</span>
-      <span class="chip"><b>Memory</b>121 GB unified</span>
-      <span class="chip"><b>Security</b>Air-gapped · 0 external calls</span>
+  <section class="hero hero-split">
+    <div class="hero-col-text">
+      <div class="eyebrow">Dell Technologies Showcase · Money20/20 Middle East · Riyadh</div>
+      <h1>AI use cases for financial services</h1>
+      <p class="lede">Six problems banks actually have — card fraud, tail risk, Arabic paperwork,
+        loan origination, branch video and operational incidents — each solved by a working system
+        rather than a slide. <strong>Five of them run entirely on the single Dell AI Appliance on this
+        table</strong> (powered by NVIDIA Grace Blackwell GB10): the data, the models and the inference. Nothing is sent anywhere, and we can
+        unplug the network cable and keep going.</p>
+      <div class="chips">
+        <span class="chip on"><span class="dot"></span>Five running on-device</span>
+        <span class="chip"><b>Workstation</b>Dell PowerEdge AI</span>
+        <span class="chip"><b>Superchip</b>NVIDIA GB10 · Blackwell</span>
+        <span class="chip"><b>Memory</b>128 GB unified</span>
+        <span class="chip"><b>Security</b>Air-gapped · 0 external calls</span>
+      </div>
     </div>
 
-    <div class="hero-media" style="--ac:var(--green)">
-      <img src="assets/img/hero-index.jpg" alt="Dell Technologies AI Command Center at Money20/20 Riyadh" class="hero-media-img">
-      <div class="hero-media-overlay"></div>
-      <div class="hero-media-badge">
-        <span class="dot"></span> Dell Technologies Sovereign AI Solutions · Live at Money20/20 Middle East, Riyadh
+    <div class="hero-col-media">
+      <div class="hero-media merged">
+        <img src="assets/img/hero-index.jpg" alt="Dell Technologies Sovereign AI Banner" class="hero-media-img">
       </div>
     </div>
   </section>
@@ -72,7 +72,7 @@
         </p>
         <div style="display:flex;gap:16px;flex-wrap:wrap">
           <div style="font-size:12px;color:var(--txt)"><span style="color:var(--green);font-family:var(--mono);font-weight:600">NVLink-C2C</span> Coherent 900 GB/s Bus</div>
-          <div style="font-size:12px;color:var(--txt)"><span style="color:var(--dell-lt);font-family:var(--mono);font-weight:600">121 GB</span> Unified LPDDR5X</div>
+          <div style="font-size:12px;color:var(--txt)"><span style="color:var(--dell-lt);font-family:var(--mono);font-weight:600">128 GB</span> Unified LPDDR5X</div>
           <div style="font-size:12px;color:var(--txt)"><span style="color:var(--amber);font-family:var(--mono);font-weight:600">SAMA / PDPL</span> 100% In-Kingdom Sovereign</div>
         </div>
       </div>
@@ -121,7 +121,7 @@
           <!-- Unified Memory Bridge Bar -->
           <rect x="40" y="142" width="260" height="20" rx="5" fill="#141e2b" stroke="#2c3e53" stroke-width="1"/>
           <circle cx="54" cy="152" r="3.5" fill="#76b900" filter="url(#glow)"/>
-          <text x="170" y="156" fill="#eaf1f8" font-size="9" font-family="monospace" text-anchor="middle">121 GB UNIFIED MEMORY POOL</text>
+          <text x="170" y="156" fill="#eaf1f8" font-size="9" font-family="monospace" text-anchor="middle">128 GB UNIFIED MEMORY POOL</text>
           <circle cx="286" cy="152" r="3.5" fill="#4aa8e8" filter="url(#glow)"/>
         </svg>
       </div>
@@ -391,28 +391,64 @@
     <a class="uc" href="aiops.html" style="--ac:#a78bfa;--bad-bg:rgba(167,139,250,.14);--bad-fg:#c4b5fd;--bad-br:rgba(167,139,250,.3)">
       <div class="uc-gfx">
         <svg viewBox="0 0 380 136" fill="none">
-          <!-- Root cause node -->
-          <circle cx="60" cy="68" r="22" fill="#2c1a35" stroke="#a78bfa" stroke-width="2"/>
-          <text x="60" y="65" fill="#c4b5fd" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle">ROOT</text>
-          <text x="60" y="77" fill="#c4b5fd" font-size="7.5" font-family="monospace" text-anchor="middle">CAUSE</text>
-          <!-- Topology mesh edges -->
-          <line x1="82" y1="68" x2="160" y2="40" stroke="#a78bfa" stroke-width="1.8"/>
-          <line x1="82" y1="68" x2="160" y2="96" stroke="#a78bfa" stroke-width="1.8"/>
-          <line x1="195" y1="40" x2="260" y2="35" stroke="#ff4757" stroke-width="1.5"/>
-          <line x1="195" y1="40" x2="260" y2="68" stroke="#ff4757" stroke-width="1.5"/>
-          <line x1="195" y1="96" x2="260" y2="105" stroke="#4aa8e8" stroke-width="1.5"/>
+          <defs>
+            <radialGradient id="rcGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.45"/>
+              <stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="brGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ff4757" stop-opacity="0.18"/>
+              <stop offset="100%" stop-color="#ff4757" stop-opacity="0.02"/>
+            </radialGradient>
+          </defs>
+
+          <!-- Root cause glow & node -->
+          <circle cx="54" cy="68" r="32" fill="url(#rcGlow)"/>
+          <circle cx="54" cy="68" r="21" fill="#241530" stroke="#a78bfa" stroke-width="2"/>
+          <text x="54" y="65" fill="#e9d5ff" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle">ROOT</text>
+          <text x="54" y="77" fill="#c4b5fd" font-size="7.5" font-family="monospace" text-anchor="middle">CAUSE</text>
+
+          <!-- Topology mesh connecting lines (Exact aligned coordinates) -->
+          <!-- Upstream to Middle Tier -->
+          <line x1="75" y1="68" x2="144" y2="40" stroke="#a78bfa" stroke-width="1.8"/>
+          <line x1="75" y1="68" x2="144" y2="96" stroke="#a78bfa" stroke-width="1.8"/>
+
+          <!-- Middle Tier to Blast Radius Nodes -->
+          <line x1="202" y1="40" x2="252" y2="47" stroke="#ff4757" stroke-width="1.6"/>
+          <line x1="202" y1="40" x2="252" y2="75" stroke="#ff4757" stroke-width="1.6"/>
+          <line x1="202" y1="96" x2="252" y2="75" stroke="#4aa8e8" stroke-width="1.5"/>
+          <line x1="202" y1="96" x2="252" y2="103" stroke="#4aa8e8" stroke-width="1.5"/>
+
+          <!-- Junction Indicator Dots -->
+          <circle cx="75" cy="68" r="3" fill="#a78bfa"/>
+          <circle cx="144" cy="40" r="2.5" fill="#ff4757"/>
+          <circle cx="144" cy="96" r="2.5" fill="#a78bfa"/>
+          <circle cx="202" cy="40" r="2.5" fill="#ff4757"/>
+          <circle cx="202" cy="96" r="2.5" fill="#4aa8e8"/>
+
           <!-- Middle tier nodes -->
-          <rect x="150" y="28" width="48" height="24" rx="5" fill="#182332" stroke="#ff4757" stroke-width="1.5"/>
-          <text x="174" y="43" fill="#ff8a94" font-size="8" font-family="monospace" text-anchor="middle">API GW</text>
-          <rect x="150" y="84" width="48" height="24" rx="5" fill="#182332" stroke="#a78bfa"/>
-          <text x="174" y="99" fill="#c4b5fd" font-size="8" font-family="monospace" text-anchor="middle">Kafka</text>
+          <rect x="144" y="28" width="58" height="24" rx="5" fill="#182332" stroke="#ff4757" stroke-width="1.5"/>
+          <text x="173" y="44" fill="#ff8a94" font-size="8.5" font-family="monospace" font-weight="600" text-anchor="middle">API GW</text>
+
+          <rect x="144" y="84" width="58" height="24" rx="5" fill="#182332" stroke="#a78bfa" stroke-width="1.5"/>
+          <text x="173" y="100" fill="#c4b5fd" font-size="8.5" font-family="monospace" font-weight="600" text-anchor="middle">Kafka</text>
+
           <!-- Downstream blast radius contour -->
-          <rect x="250" y="20" width="105" height="96" rx="8" fill="rgba(255,71,87,0.08)" stroke="#ff4757" stroke-dasharray="3 2"/>
-          <text x="302" y="33" fill="#ff8a94" font-size="7.5" font-family="monospace" font-weight="bold" text-anchor="middle">BLAST RADIUS</text>
-          <rect x="260" y="42" width="85" height="20" rx="4" fill="#1e2a3b" stroke="#ff4757"/>
-          <text x="302" y="55" fill="#eaf1f8" font-size="8" font-family="monospace" text-anchor="middle">Payments API</text>
-          <rect x="260" y="68" width="85" height="20" rx="4" fill="#1e2a3b" stroke="#76b900"/>
-          <text x="302" y="81" fill="#76b900" font-size="8" font-family="monospace" text-anchor="middle">SADAD Gateway</text>
+          <rect x="242" y="14" width="124" height="108" rx="8" fill="url(#brGlow)" stroke="#ff4757" stroke-dasharray="4 2"/>
+          <text x="304" y="27" fill="#ff8a94" font-size="7.5" font-family="monospace" font-weight="bold" text-anchor="middle" letter-spacing="1">BLAST RADIUS</text>
+
+          <!-- Impacted services inside blast radius -->
+          <rect x="252" y="36" width="104" height="22" rx="4" fill="#1b2535" stroke="#ff4757" stroke-width="1.2"/>
+          <circle cx="262" cy="47" r="2.5" fill="#ff4757"/>
+          <text x="308" y="50" fill="#ff8a94" font-size="8" font-family="monospace" font-weight="500" text-anchor="middle">Payments API</text>
+
+          <rect x="252" y="64" width="104" height="22" rx="4" fill="#1b2535" stroke="#ff4757" stroke-width="1.2"/>
+          <circle cx="262" cy="75" r="2.5" fill="#ff4757"/>
+          <text x="308" y="78" fill="#ff8a94" font-size="8" font-family="monospace" font-weight="500" text-anchor="middle">SADAD Gateway</text>
+
+          <rect x="252" y="92" width="104" height="22" rx="4" fill="#141e2b" stroke="#334155" stroke-width="1.2"/>
+          <circle cx="262" cy="103" r="2.5" fill="#4aa8e8"/>
+          <text x="308" y="106" fill="#94a3b8" font-size="8" font-family="monospace" text-anchor="middle">14.2k POS Rails</text>
         </svg>
       </div>
       <div class="uc-body">
@@ -420,7 +456,7 @@
           <span class="uc-cat">06 · Operational resilience</span>
           <span class="uc-badge">HOSTED</span>
         </div>
-        <h4>AI SRE incident intelligence</h4>
+        <h4>AIOps</h4>
         <p>Synapse correlates alerts across a 19k component CMDB graph, collapsing alert storms
            back to their single root cause and scoring change risk before deployment.</p>
       </div>
@@ -441,7 +477,7 @@
       <i>Compute capability 12.1 · Desktop form factor</i>
     </div>
     <div class="stat">
-      <b>121 GB</b>
+      <b>128 GB</b>
       <span>Unified memory</span>
       <i>Coherent NVLink-C2C interconnect between CPU and GPU</i>
     </div>

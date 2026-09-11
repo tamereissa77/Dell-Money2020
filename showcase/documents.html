@@ -201,16 +201,72 @@ most global vendor stacks fail in Middle East deployments.</p>
 </div>
 
 <div class="section-note">What you will see in the live interface</div>
-<div class="mockup">
-  <div class="mockup-bar">
-    <div class="mockup-dots"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span></div>
-    <div class="mockup-title">Document Intelligence &amp; Multi-Store Ingestion Console — Port 9501</div>
-    <span class="mockup-badge">NATIVE ARABIC</span>
+
+<!-- View 1: Visual Layout & Arabic OCR Extraction -->
+<div class="feature-split">
+  <div class="split-text">
+    <div class="dfc-badge" style="color:var(--amber);background:rgba(255,165,2,0.12);border-color:rgba(255,165,2,0.3)"><span class="dot" style="background:var(--amber);box-shadow:0 0 8px var(--amber)"></span> Console View 1 · Layout-Aware Extraction</div>
+    <h3 style="font-size:1.35rem;font-weight:600;color:#fff;margin:0">Visual Element Detection &amp; Native Arabic OCR</h3>
+    <p>Upload multi-page financial statements, tax cards, or commercial registers. The pipeline visually segments the page geometry before extracting text, isolating images, section headers, text blocks, and stamped corporate credentials.</p>
+
+    <div class="split-card" style="border-left-color: var(--amber); border-color: rgba(255, 165, 2, 0.3)">
+      <div class="split-card-header">
+        <span class="split-card-title" style="color: var(--amber)">Detected Layout Elements</span>
+        <span class="split-card-badge" style="background: rgba(255, 165, 2, 0.18); color: #ffa502; border-color: rgba(255, 165, 2, 0.35)">AIR-GAPPED GB10</span>
+      </div>
+      <div class="split-card-tx">Deloitte &amp; PwC Joint Auditor Report</div>
+      <p class="split-card-desc">The model accurately isolates <strong>35 Text blocks</strong>, <strong>4 Section-Headers</strong>, and <strong>2 Corporate Seals/Signatures</strong> without character fragmentation or right-to-left reversal.</p>
+    </div>
+
+    <div class="split-takeaway">
+      <strong>Model selection:</strong> Choose between high-precision reasoning (9B parameter model) or high-throughput batch extraction (1B parameter model) depending on institutional processing volume.
+    </div>
   </div>
-  <img src="assets/img/documents-ui.jpg" alt="The document extraction interface">
+
+  <div class="split-media">
+    <div class="mockup">
+      <div class="mockup-bar">
+        <div class="mockup-dots"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span></div>
+        <div class="mockup-title">Arabic Document Layout Detection &amp; OCR — Port 9501</div>
+        <span class="mockup-badge" style="background:rgba(255,165,2,0.15);color:var(--amber);border-color:rgba(255,165,2,0.3)">LIVE ON :9501</span>
+      </div>
+      <img src="assets/img/documents-layout-ocr.png" alt="Arabic document layout and OCR extraction interface">
+    </div>
+  </div>
 </div>
-<p>Upload a multi-page commercial register, choose the extraction model and table parsing strategy,
-and watch the structured output stream directly into the four live storage backends.</p>
+
+<!-- View 2: Real-time Multi-Store Knowledge Graph & Storage Pipeline -->
+<div class="feature-split">
+  <div class="split-text">
+    <div class="dfc-badge" style="color:var(--amber);background:rgba(255,165,2,0.12);border-color:rgba(255,165,2,0.3)"><span class="dot" style="background:var(--amber);box-shadow:0 0 8px var(--amber)"></span> Console View 2 · Multi-Store Streaming</div>
+    <h3 style="font-size:1.35rem;font-weight:600;color:#fff;margin:0">Automated Entity Triples &amp; Knowledge Graph Ingestion</h3>
+    <p>Extracted information does not sit in flat text files. The pipeline automatically decomposes unstructured Arabic prose into structured Knowledge Graph triples, relational tables, and vector embeddings in real time.</p>
+
+    <div class="split-card" style="border-left-color: #0076CE; border-color: rgba(0, 118, 206, 0.3)">
+      <div class="split-card-header">
+        <span class="split-card-title" style="color: #38bdf8">Live Ingestion Counters</span>
+        <span class="split-card-badge" style="background: rgba(0, 118, 206, 0.18); color: #38bdf8; border-color: rgba(0, 118, 206, 0.35)">CONCURRENT TARGETS</span>
+      </div>
+      <div class="split-card-tx">PostgreSQL · ArangoDB · Qdrant · MinIO</div>
+      <p class="split-card-desc">During Page 4 processing: <strong>7 Knowledge Graph triples</strong> (mapping corporate leadership: Board Chairman, Group CEO, Financial Director), <strong>1 Relational Table</strong>, <strong>13 Semantic Vectors</strong>, and <strong>10 Image crops</strong> streamed simultaneously.</p>
+    </div>
+
+    <div class="split-takeaway">
+      <strong>Enterprise KYC ready:</strong> Discovered entities (e.g. <em>SNB → Al Ahli Saudi Bank</em>) automatically link across corporate filings to unmask beneficial ownership networks.
+    </div>
+  </div>
+
+  <div class="split-media">
+    <div class="mockup">
+      <div class="mockup-bar">
+        <div class="mockup-dots"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span></div>
+        <div class="mockup-title">Real-Time Knowledge Graph &amp; Multi-Store Pipeline — Port 9501</div>
+        <span class="mockup-badge" style="background:rgba(255,165,2,0.15);color:var(--amber);border-color:rgba(255,165,2,0.3)">STORAGE PIPELINE</span>
+      </div>
+      <img src="assets/img/documents-kg-storage.png" alt="Multi-store pipeline showing real-time Knowledge Graph triples and storage status">
+    </div>
+  </div>
+</div>
 
 <div class="section-note">Why a knowledge graph matters for KYC</div>
 <p>A single document answers questions about itself. A knowledge graph answers questions <em>across</em> documents —
