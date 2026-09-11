@@ -27,6 +27,14 @@ cuda12 = [
 cuda13 = [
     "cuml-cu13==26.4.*",
     "cuopt-cu13==26.4.*",
+    # cuOpt 26.4 leaves nvidia-cudss-cu13 unpinned, so it resolves to 0.8.x,
+    # whose interrupt-data API it was not built against. The solve then aborts
+    # the process with:
+    #   CUDSS call ended unsuccessfully with status = 1, "cudssDataSet for interrupt"
+    # It is a hard SIGABRT/SIGSEGV, not a catchable exception, so Streamlit dies
+    # and the container restarts with no error shown to the user. libcuopt 26.6
+    # and 26.8 carry this same bound upstream; 26.4 is missing it.
+    "nvidia-cudss-cu13>=0.7,<0.8",
 ]
 cuda13-socp = [
     "cuopt-cu13==26.6.*",
