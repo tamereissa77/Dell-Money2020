@@ -14,6 +14,31 @@ SHELL   := /bin/bash
 # Grace period for SIGTERM before Docker escalates to SIGKILL. Ollama and Triton
 # need well over the 10s default; a rushed kill is what produced Exit 137.
 STOP_TIMEOUT ?= 60
+
+# Which compose project does a demo run as? Declared in .project when it cannot
+# be inferred — VSS runs as "mdx" from a compose file three levels down, and the
+# document demo runs as "name". Falling back to a compose-file search misses both,
+# and a demo the launcher cannot see is a demo it cannot stop.
+define proj_of
+$$(cat $(1)/.project 2>/dev/null || echo $(1))
+endef
+
+# running container count for a demo, via `docker compose ls`
+define running_of
+$$(docker compose ls --format json 2>/dev/null | python3 -c "import sys,json;p='$(1)';d=json.load(sys.stdin);print(sum(int(x) for e in d if e['Name']==p for x in __import__('re').findall(r'running\((\d+)\)',e['Status'])) or 0)" 2>/dev/null || echo 0)
+endef
+
+
+# A demo's compose file is not always at its root (Synapse keeps it in a
+# subdirectory). Resolve it per demo, otherwise `docker compose ps` errors at the
+# root, reports nothing running, and the launcher silently fails to stop it —
+# leaving the GB10 occupied while another demo starts.
+define compose_of
+$$(if [ -f "$(1)/docker-compose.yml" ]; then echo "-f $(1)/docker-compose.yml"; \
+   elif [ -f "$(1)/compose.yml" ]; then echo "-f $(1)/compose.yml"; \
+   else f=$$$$(find "$(1)" -maxdepth 2 \( -name 'docker-compose*.yml' -o -name 'compose*.yml' \) 2>/dev/null | head -1); \
+        [ -n "$$$$f" ] && echo "-f $$$$f" || echo ""; fi)
+endef
 DEMOS   := $(sort $(notdir $(patsubst %/,%,$(dir $(wildcard */Makefile)))))
 ALIASES := $(sort $(foreach d,$(DEMOS),$(shell cat $(d)/.alias 2>/dev/null)))
 
@@ -53,18 +78,19 @@ list:
 	@printf "%-34s %-10s %s\n" ------------------------------ --------- --------
 	@for d in $(DEMOS); do \
 	  a=$$(cat $$d/.alias 2>/dev/null || echo -); \
-	  n=$$(cd $$d && docker compose ps -q 2>/dev/null | wc -l); \
+	  pj=$$(cat $$d/.project 2>/dev/null || echo $$d); \
+	  n=$$(docker compose ls --format json 2>/dev/null | python3 -c "import sys,json,re;p='$$pj';d=json.load(sys.stdin);print(next((int(m.group(1)) for e in d if e['Name']==p for m in [re.search(r'running\((\d+)\)',e['Status'])] if m),0))" 2>/dev/null || echo 0); \
 	  if [ "$$n" -gt 0 ]; then s="running ($$n)"; else s="stopped"; fi; \
 	  printf "%-34s %-10s %s\n" "$$d" "$$a" "$$s"; done
 
 stop:
 	@for d in $(DEMOS); do \
-	  n=$$(cd $$d && docker compose ps -q 2>/dev/null | wc -l); \
+	  pj=$$(cat $$d/.project 2>/dev/null || echo $$d); \
+	  n=$$(docker compose ls --format json 2>/dev/null | python3 -c "import sys,json,re;p='$$pj';d=json.load(sys.stdin);print(next((int(m.group(1)) for e in d if e['Name']==p for m in [re.search(r'running\((\d+)\)',e['Status'])] if m),0))" 2>/dev/null || echo 0); \
 	  if [ "$$n" -gt 0 ]; then printf "  stopping %s gracefully " "$$d"; \
-	    (cd $$d && docker compose stop --timeout $(STOP_TIMEOUT) >/dev/null 2>&1); \
-	    (cd $$d && docker compose down --timeout $(STOP_TIMEOUT) >/dev/null 2>&1); \
-	    for i in $$(seq 1 60); do \
-	      left=$$(cd $$d && docker compose ps -q 2>/dev/null | wc -l); \
+	    $(MAKE) --no-print-directory -C $$d down >/dev/null 2>&1 || true; \
+	    for i in $$(seq 1 90); do \
+	      left=$$(docker ps -q --filter "label=com.docker.compose.project=$$pj" | wc -l); \
 	      [ "$$left" -eq 0 ] && break; printf "."; sleep 1; done; echo " done"; fi; done
 	@echo "all demos stopped."
 
@@ -73,13 +99,13 @@ define DEMO_RULES
 $(1):
 	@for d in $$(DEMOS); do \
 	  if [ "$$$$d" != "$(2)" ]; then \
-	    n=$$$$(cd $$$$d && docker compose ps -q 2>/dev/null | wc -l); \
+	    pj=$$$$(cat $$$$d/.project 2>/dev/null || echo $$$$d); \
+	    n=$$$$(docker ps -q --filter "label=com.docker.compose.project=$$$$pj" | wc -l); \
 	    if [ "$$$$n" -gt 0 ]; then \
 	      printf "  stopping %s gracefully (shared GB10) " "$$$$d"; \
-	      (cd $$$$d && docker compose stop --timeout $$(STOP_TIMEOUT) >/dev/null 2>&1); \
-	      (cd $$$$d && docker compose down --timeout $$(STOP_TIMEOUT) >/dev/null 2>&1); \
-	      for i in $$$$(seq 1 60); do \
-	        left=$$$$(cd $$$$d && docker compose ps -q 2>/dev/null | wc -l); \
+	      $$(MAKE) --no-print-directory -C $$$$d down >/dev/null 2>&1 || true; \
+	      for i in $$$$(seq 1 90); do \
+	        left=$$$$(docker ps -q --filter "label=com.docker.compose.project=$$$$pj" | wc -l); \
 	        [ "$$$$left" -eq 0 ] && break; printf "."; sleep 1; done; \
 	      echo " done"; fi; fi; done
 	@$$(MAKE) --no-print-directory _gpu_free

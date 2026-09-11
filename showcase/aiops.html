@@ -1,0 +1,245 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dell Technologies · Operational Resilience · Autonomous SRE Intelligence</title>
+<link rel="stylesheet" href="assets/style.css">
+</head><body>
+<div class="shell">
+<aside class="side">
+  <div class="lockup">
+    <img src="assets/dell-logo.png?v=2" alt="Dell Technologies" class="d">
+    <span class="sep"></span>
+    <img src="assets/nvidia-white.png" alt="NVIDIA" class="n">
+  </div>
+  <div class="side-label">Start here</div>
+  <nav class="side-nav">
+    <a href="index.html"><span class="k">Overview</span><span class="t">All six use cases</span></a>
+  </nav>
+  <div class="side-label">The use cases</div>
+  <nav class="side-nav">
+    <a href="fraud.html" style="--ac:var(--green)"><span class="k">01 · Fraud operations</span><span class="t">Real-time card fraud detection</span></a>
+    <a href="portfolio.html" style="--ac:var(--dell-lt)"><span class="k">02 · Treasury &amp; wealth</span><span class="t">Portfolio optimisation under tail risk</span></a>
+    <a href="documents.html" style="--ac:var(--amber)"><span class="k">03 · Back office</span><span class="t">Arabic document intelligence</span></a>
+    <a href="loan.html" style="--ac:var(--dell)"><span class="k">04 · Retail lending</span><span class="t">Automated loan origination</span></a>
+    <a href="vss.html" style="--ac:var(--cyan)"><span class="k">05 · Physical security</span><span class="t">Video search and summarisation</span></a>
+    <a href="aiops.html" class="on" style="--ac:var(--purple)"><span class="k">06 · Operational resilience</span><span class="t">AIOps</span></a>
+  </nav>
+  <div class="side-foot">
+    <strong>Money20/20 Middle East</strong><br>
+    Riyadh · 14–16 September 2026<br><br>
+    Dell Technologies with NVIDIA
+  </div>
+</aside>
+<div class="content">
+<main>
+
+<section class="hero">
+  <div class="eyebrow" style="--ac:var(--purple)">06 · Operational resilience</div>
+  <h1>When something breaks at 3am,<br>what actually broke?</h1>
+  <p class="lede">Synapse turns an enterprise CMDB dependency graph into real-time operational intelligence.
+    It maps every alert across 19,000 components and 31,000 dependency edges, reasoning over graph topology
+    to isolate true root cause, calculate customer blast radius, and score deployment risk before changes ship.</p>
+  <div class="chips">
+    <span class="chip"><b>Estate Graph</b>19k components · 31k dependency edges</span>
+    <span class="chip"><b>Architecture</b>Kafka · Spark streaming · MCP agentic reasoning</span>
+    <span class="chip" style="background:rgba(167,139,250,.14);border-color:rgba(167,139,250,.4);color:#c4b5fd">
+      Hosted platform · Enterprise estate CMDB</span>
+  </div>
+
+  <div class="hero-media" style="--ac:var(--purple)">
+    <img src="assets/img/hero-aiops.jpg" alt="Dell Technologies Autonomous SRE Incident Operations Command Center" class="hero-media-img">
+    <div class="hero-media-overlay"></div>
+    <div class="hero-media-badge">
+      <span class="dot"></span> Dell Technologies Operational Resilience · Autonomous SRE &amp; CMDB Topology
+    </div>
+  </div>
+</section>
+
+<div class="section-note">The problem</div>
+<p>During an outage, three questions decide downtime cost. Most institutions answer all three by frantically
+paging engineers who happen to remember how legacy systems connect:</p>
+<div class="grid3">
+  <div class="stat" style="--ac:var(--purple)"><b>What broke?</b><span>Root-cause analysis</span>
+    <i>walks <em>upstream</em> from the visible alert symptom to physical cause</i></div>
+  <div class="stat" style="--ac:var(--red)"><b>Who is hit?</b><span>Blast-radius analysis</span>
+    <i>walks <em>downstream</em> to impacted payment rails and customer channels</i></div>
+  <div class="stat" style="--ac:var(--green)"><b>Is it safe?</b><span>Change-risk scoring</span>
+    <i>scores a proposed maintenance patch against full topological blast radius</i></div>
+</div>
+
+<div class="section-note">The idea in one picture</div>
+<div class="diagram">
+  <div class="diagram-bar">
+    <div class="diagram-title" style="--ac:var(--purple)">
+      <span class="dot"></span> Bidirectional Graph Traversal: Upstream Cause vs Downstream Impact
+    </div>
+    <span class="diagram-pill">19,000 Nodes · Agentic MCP Graph Traversal</span>
+  </div>
+
+  <svg viewBox="0 0 760 300" role="img" aria-label="One failing component traced upstream to a cause and downstream to affected customers">
+    <defs>
+      <linearGradient id="blastGlow" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#ff4757" stop-opacity="0.18"/>
+        <stop offset="100%" stop-color="#ff4757" stop-opacity="0.04"/>
+      </linearGradient>
+      <radialGradient id="rootPulse" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.4"/>
+        <stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/>
+      </radialGradient>
+      <marker id="arUp" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M6,0 L0,3 L6,6 z" fill="#a78bfa"/>
+      </marker>
+      <marker id="arDown" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 z" fill="#ff4757"/>
+      </marker>
+    </defs>
+
+    <!-- Upstream Label -->
+    <rect x="35" y="15" width="220" height="26" rx="5" fill="#182333" stroke="#a78bfa"/>
+    <text x="145" y="32" fill="#c4b5fd" font-size="10" font-family="monospace" font-weight="bold" text-anchor="middle">
+      ← UPSTREAM: WHAT BROKE (ROOT CAUSE)
+    </text>
+
+    <!-- Downstream Label -->
+    <rect x="495" y="15" width="230" height="26" rx="5" fill="#182333" stroke="#ff4757"/>
+    <text x="610" y="32" fill="#ff8a94" font-size="10" font-family="monospace" font-weight="bold" text-anchor="middle">
+      DOWNSTREAM: WHO IS HIT (BLAST RADIUS) →
+    </text>
+
+    <!-- Upstream Root Cause Node (Glowing Aura) -->
+    <circle cx="95" cy="145" r="44" fill="url(#rootPulse)"/>
+    <rect x="35" y="115" width="120" height="60" rx="10" fill="#20152b" stroke="#a78bfa" stroke-width="2"/>
+    <text x="95" y="136" fill="#ffffff" font-size="11" font-weight="bold" text-anchor="middle">DB Cluster-04</text>
+    <text x="95" y="152" fill="#ff4757" font-size="9" font-family="monospace" font-weight="bold" text-anchor="middle">DISK I/O 100%</text>
+    <text x="95" y="166" fill="#c4b5fd" font-size="8.5" font-family="monospace" text-anchor="middle">ROOT CAUSE</text>
+
+    <!-- Intermediate Upstream Services -->
+    <path d="M155,145 L245,145" stroke="#a78bfa" stroke-width="2" fill="none" marker-end="url(#arUp)"/>
+
+    <rect x="245" y="122" width="95" height="46" rx="7" fill="#152130" stroke="#a78bfa"/>
+    <text x="292" y="142" fill="#ffffff" font-size="10.5" font-weight="500" text-anchor="middle">Core Ledger</text>
+    <text x="292" y="156" fill="#8ba0b6" font-size="8.5" font-family="monospace" text-anchor="middle">Tx-Store Svc</text>
+
+    <path d="M340,145 L385,145" stroke="#ff4757" stroke-width="2" fill="none"/>
+
+    <!-- The Alarm Symptom (What PagerDuty / SRE Sees) -->
+    <g>
+      <rect x="385" y="112" width="130" height="66" rx="10" fill="#2b1419" stroke="#ff4757" stroke-width="2"/>
+      <rect x="400" y="120" width="100" height="16" rx="3" fill="#ff4757"/>
+      <text x="450" y="132" fill="#ffffff" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">P1 OUTAGE ALERT</text>
+      <text x="450" y="152" fill="#ffffff" font-size="11.5" font-weight="bold" text-anchor="middle">Payments API</text>
+      <text x="450" y="168" fill="#ff8a94" font-size="9" font-family="monospace" text-anchor="middle">HTTP 504 Timeout</text>
+    </g>
+
+    <!-- Downstream Blast Radius Contour -->
+    <rect x="545" y="55" width="185" height="190" rx="12" fill="url(#blastGlow)" stroke="#ff4757" stroke-dasharray="4 3"/>
+    <text x="637" y="75" fill="#ff8a94" font-size="9" font-family="monospace" font-weight="bold" text-anchor="middle">IMPACTED CHANNELS</text>
+
+    <!-- Downstream Fan-out Arrows -->
+    <path d="M515,135 C535,135 540,105 565,105" stroke="#ff4757" stroke-width="1.8" fill="none" marker-end="url(#arDown)"/>
+    <path d="M515,145 L565,145" stroke="#ff4757" stroke-width="1.8" fill="none" marker-end="url(#arDown)"/>
+    <path d="M515,155 C535,155 540,195 565,195" stroke="#ff4757" stroke-width="1.8" fill="none" marker-end="url(#arDown)"/>
+
+    <!-- Downstream Target 1 -->
+    <rect x="565" y="88" width="150" height="34" rx="6" fill="#182333" stroke="#ff4757"/>
+    <text x="575" y="104" fill="#ffffff" font-size="10" font-weight="500">Mada POS Acquiring</text>
+    <text x="575" y="116" fill="#ff8a94" font-size="8" font-family="monospace">14,200 terminal drops</text>
+
+    <!-- Downstream Target 2 -->
+    <rect x="565" y="128" width="150" height="34" rx="6" fill="#182333" stroke="#ff4757"/>
+    <text x="575" y="144" fill="#ffffff" font-size="10" font-weight="500">Mobile Banking App</text>
+    <text x="575" y="156" fill="#ff8a94" font-size="8" font-family="monospace">ApplePay / Transfer fail</text>
+
+    <!-- Downstream Target 3 -->
+    <rect x="565" y="178" width="150" height="34" rx="6" fill="#182333" stroke="#ff4757"/>
+    <text x="575" y="194" fill="#ffffff" font-size="10" font-weight="500">ATM Host Gateway</text>
+    <text x="575" y="206" fill="#ff8a94" font-size="8" font-family="monospace">Cash dispense timeouts</text>
+
+    <text x="380" y="278" fill="#8ba0b6" font-size="10.5" font-family="monospace" text-anchor="middle">
+      The alert is only the symptom — the CMDB graph holds both the physical cause and the customer consequence
+    </text>
+  </svg>
+
+  <div class="cap">
+    Monitoring tools fire an alert storm when the Payments API starts throwing 504 timeouts.
+    Traversing the graph immediately isolates that Database Cluster 04 saturated its disk volume three hops upstream,
+    and quantifies that 14,200 merchant POS terminals and the mobile banking rail are in the blast path.
+  </div>
+</div>
+
+<div class="section-note">Why a topological graph collapses alert storms</div>
+<p>In modern financial infrastructure, a single infrastructure failure triggers cascade alerts across dozens of downstream microservices.
+Rather than human teams triaging 40 separate alerts across disparate Slack channels, graph traversal collapses the entire alert storm
+back to its common ancestor origin.</p>
+
+<div class="mockup">
+  <div class="mockup-bar">
+    <div class="mockup-dots"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span></div>
+    <div class="mockup-title">Synapse AI SRE Platform Dashboard — Incident &amp; Topology Overview</div>
+    <span class="mockup-badge">ENTERPRISE CMDB</span>
+  </div>
+  <img src="assets/img/aiops-ui.jpg" alt="The Synapse AIOps platform">
+</div>
+
+<div class="section-note">Where outage costs accumulate</div>
+<div class="bars">
+  <div class="bar-row"><span class="lbl">Isolating what broke</span><span class="bar-track"><i class="bar-fill" style="width:100%" data-w="100"></i></span><span class="bar-val">72% time</span></div>
+  <div class="bar-row"><span class="lbl">Identifying customer impact</span><span class="bar-track"><i class="bar-fill" style="width:48%" data-w="48"></i></span><span class="bar-val">20% time</span></div>
+  <div class="bar-row hot"><span class="lbl">Applying the actual fix</span><span class="bar-track"><i class="bar-fill" style="width:20%" data-w="20"></i></span><span class="bar-val">8% time</span></div>
+</div>
+
+<div class="vs">
+  <div class="no"><div class="t">Manual Outage Triage</div>
+    <p>Forty components flash red simultaneously. Five engineering squads join an emergency bridge.
+    Thirty minutes are lost establishing who depends on whom.</p></div>
+  <div class="yes"><div class="t">Autonomous Graph Traversal</div>
+    <p>The reasoning agent traverses dependency edges backwards from the alert to the root failure,
+    identifying the exact disk volume in 4 seconds.</p></div>
+</div>
+
+<div class="section-note">How the AI layer works over Model Context Protocol (MCP)</div>
+<p>Rather than asking an LLM to guess infrastructure from hallucinations, the agent uses structured tools over MCP to traverse
+the ground-truth CMDB graph:</p>
+<table><thead><tr><th>MCP Tool Interface</th><th>Operational Capability</th></tr></thead><tbody>
+<tr><td><code>depends_on_chain</code></td><td>Backward traversal — isolates exact upstream physical root cause</td></tr>
+<tr><td><code>affects_chain</code></td><td>Forward traversal — calculates downstream customer and revenue blast radius</td></tr>
+<tr><td><code>execute_sql_query</code></td><td>Read-only schema queries, double-guarded against state modification</td></tr>
+<tr><td><code>verify_component_existence</code></td><td>Strict CMDB validation with entity fallback suggestions</td></tr>
+<tr><td><code>get_component_name_suggestions</code></td><td>Fuzzy phonetic matching when alerts report non-canonical service aliases</td></tr>
+</tbody></table>
+
+<div class="section-note">Automated enterprise ticketing bridges</div>
+<p>An incident bridges seamlessly to <strong>Jira, ServiceNow, and BMC Helix</strong>, injecting topological root-cause analysis
+and customer impact directly into the ticket before on-call engineers even open their laptops.</p>
+
+<div class="section-note">Honest framing</div>
+<div class="note"><b>A graph is only as good as its discovery pipeline</b>
+<p>Synapse relies on continuous automated CMDB discovery via Kafka and Spark. If an infrastructure team deploys an undocumented
+shadow microservice without registering its edges, the graph will have blind spots. In practice, discovery runs continuously from network flow logs.</p></div>
+
+<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:1.8rem">
+  <a class="launch" href="https://origin-craft-demo.online/" target="_blank" style="background:#a78bfa;color:#0a0e13">Open the live demo →</a>
+  <a class="launch alt" href="index.html">Back to overview</a>
+</div>
+</main>
+<footer class="site"><div>
+  <span>Money20/20 Middle East · Riyadh · 14–16 September 2026</span>
+  <span>Dell Technologies with NVIDIA</span>
+  <span class="tag"><span class="dot"></span> Enterprise Resilience</span>
+</div></footer>
+<script>
+document.querySelectorAll('a[href^="http://localhost:"]').forEach(a=>{
+  a.href = a.href.replace('localhost', location.hostname);
+});
+const io = new IntersectionObserver((es)=>{
+  es.forEach(e=>{ if(!e.isIntersecting) return;
+    e.target.querySelectorAll('.bar-fill').forEach((b,i)=>{
+      setTimeout(()=>{ b.style.width = b.dataset.w + '%'; }, i*70);
+    });
+    io.unobserve(e.target);
+  });
+},{threshold:.25});
+document.querySelectorAll('[data-animate]').forEach(el=>io.observe(el));
+</script>
+</div>
+</div>
+</body></html>

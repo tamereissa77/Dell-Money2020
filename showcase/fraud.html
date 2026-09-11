@@ -1,0 +1,316 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dell Technologies · Fraud Detection · Graph Neural Networks</title>
+<link rel="stylesheet" href="assets/style.css">
+</head><body>
+<div class="shell">
+<aside class="side">
+  <div class="lockup">
+    <img src="assets/dell-logo.png?v=2" alt="Dell Technologies" class="d">
+    <span class="sep"></span>
+    <img src="assets/nvidia-white.png" alt="NVIDIA" class="n">
+  </div>
+  <div class="side-label">Start here</div>
+  <nav class="side-nav">
+    <a href="index.html"><span class="k">Overview</span><span class="t">All six use cases</span></a>
+  </nav>
+  <div class="side-label">The use cases</div>
+  <nav class="side-nav">
+    <a href="fraud.html" class="on" style="--ac:var(--green)"><span class="k">01 · Fraud operations</span><span class="t">Real-time card fraud detection</span></a>
+    <a href="portfolio.html" style="--ac:var(--dell-lt)"><span class="k">02 · Treasury &amp; wealth</span><span class="t">Portfolio optimisation under tail risk</span></a>
+    <a href="documents.html" style="--ac:var(--amber)"><span class="k">03 · Back office</span><span class="t">Arabic document intelligence</span></a>
+    <a href="loan.html" style="--ac:var(--dell)"><span class="k">04 · Retail lending</span><span class="t">Automated loan origination</span></a>
+    <a href="vss.html" style="--ac:var(--cyan)"><span class="k">05 · Physical security</span><span class="t">Video search and summarisation</span></a>
+    <a href="aiops.html" style="--ac:var(--purple)"><span class="k">06 · Operational resilience</span><span class="t">AIOps</span></a>
+  </nav>
+  <div class="side-foot">
+    <strong>Money20/20 Middle East</strong><br>
+    Riyadh · 14–16 September 2026<br><br>
+    Dell Technologies with NVIDIA
+  </div>
+</aside>
+<div class="content">
+<main>
+
+<section class="hero">
+  <div class="eyebrow" style="--ac:var(--green)">01 · Fraud operations</div>
+  <h1>Finding fraud in the graph</h1>
+  <p class="lede">A graph neural network scores card transactions in real time, and every decision
+    arrives with the reasons behind it. It works because fraud lives in relationships — between
+    cardholders, merchants and places — not in any single transaction.</p>
+  <div class="chips">
+    <span class="chip"><b>Model</b>GraphSAGE + XGBoost</span>
+    <span class="chip"><b>Data</b>24,386,900 transactions</span>
+    <span class="chip on"><span class="dot"></span>Live on :8090</span>
+    <span class="chip"><b>Inference</b>0.002 ms per transaction</span>
+  </div>
+
+  <div class="hero-media" style="--ac:var(--green)">
+    <img src="assets/img/hero-fraud.jpg" alt="Dell Technologies Financial Cybersecurity Intelligence Hub" class="hero-media-img">
+    <div class="hero-media-overlay"></div>
+    <div class="hero-media-badge">
+      <span class="dot"></span> Dell Technologies AI Solution · Real-Time GNN Fraud Shield (589k tx/s)
+    </div>
+  </div>
+</section>
+
+<div class="section-note">The problem</div>
+<p>In this dataset <strong>0.122% of transactions are fraudulent</strong> — one in 819. A model that
+predicts “never fraud” is 99.88% accurate and completely useless. That imbalance is why accuracy is
+the wrong measure here, and why the cost of a false alarm has to be weighed against the cost of a miss.</p>
+<p>The harder problem is that fraudulent transactions rarely look unusual on their own. Ordinary
+amounts, ordinary times, ordinary categories.</p>
+
+<div class="section-note">What the data actually says</div>
+<p>Measured during preprocessing of all 24.4 million rows — correlation with the fraud label:</p>
+<div class="bars">
+  <div class="bar-row hot"><span class="lbl">Merchant state</span><span class="bar-track"><i class="bar-fill" style="width:100%" data-w="100"></i></span><span class="bar-val">35.9%</span></div>
+  <div class="bar-row hot"><span class="lbl">Merchant identity</span><span class="bar-track"><i class="bar-fill" style="width:97%" data-w="97"></i></span><span class="bar-val">34.9%</span></div>
+  <div class="bar-row hot"><span class="lbl">Merchant city</span><span class="bar-track"><i class="bar-fill" style="width:91%" data-w="91"></i></span><span class="bar-val">32.5%</span></div>
+  <div class="bar-row"><span class="lbl">Postal code</span><span class="bar-track"><i class="bar-fill" style="width:42%" data-w="42"></i></span><span class="bar-val">15.0%</span></div>
+  <div class="bar-row"><span class="lbl">Merchant category</span><span class="bar-track"><i class="bar-fill" style="width:35%" data-w="35"></i></span><span class="bar-val">12.7%</span></div>
+  <div class="bar-row"><span class="lbl">Cardholder history</span><span class="bar-track"><i class="bar-fill" style="width:18%" data-w="18"></i></span><span class="bar-val">6.6%</span></div>
+  <div class="bar-row"><span class="lbl">Day of month</span><span class="bar-track"><i class="bar-fill" style="width:3%" data-w="1"></i></span><span class="bar-val">0.3%</span></div>
+</div>
+<p style="margin-top:1rem">The strongest signals are <strong>entities and places</strong> — not transaction amount,
+not timing. That is inherently a graph problem, which is why a conventional tabular model struggles.</p>
+
+<div class="section-note">The idea in one picture</div>
+<div class="diagram">
+  <div class="diagram-bar">
+    <div class="diagram-title" style="--ac:var(--green)">
+      <span class="dot"></span> Bipartite Relational Graph Representation
+    </div>
+    <span class="diagram-pill">32-dim GraphSAGE Embedding + Shapley Attribution</span>
+  </div>
+
+  <svg viewBox="0 0 760 280" role="img" aria-label="Cardholders and merchants connected by transactions, with a fraud cluster highlighted">
+    <defs>
+      <radialGradient id="ringGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#ff4757" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="#ff4757" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="fraudEdge" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#ff4757"/>
+        <stop offset="100%" stop-color="#ff6b81"/>
+      </linearGradient>
+      <marker id="arNormal" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 z" fill="#3b526b"/>
+      </marker>
+      <marker id="arFraud" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 z" fill="#ff4757"/>
+      </marker>
+    </defs>
+
+    <!-- Column Header Banners -->
+    <rect x="30" y="10" width="130" height="26" rx="6" fill="#131e2b" stroke="#25374a"/>
+    <text x="95" y="27" fill="#4aa8e8" font-size="10.5" font-family="monospace" font-weight="600" text-anchor="middle" letter-spacing="1">CARDHOLDERS</text>
+
+    <rect x="295" y="10" width="150" height="26" rx="6" fill="#131e2b" stroke="#25374a"/>
+    <text x="370" y="27" fill="#76b900" font-size="10.5" font-family="monospace" font-weight="600" text-anchor="middle" letter-spacing="1">PAYMENT EDGES</text>
+
+    <rect x="580" y="10" width="140" height="26" rx="6" fill="#131e2b" stroke="#25374a"/>
+    <text x="650" y="27" fill="#ffa502" font-size="10.5" font-family="monospace" font-weight="600" text-anchor="middle" letter-spacing="1">MERCHANTS</text>
+
+    <!-- Glowing Alert Aura for Rome Merchant Syndicate -->
+    <circle cx="650" cy="146" r="48" fill="url(#ringGlow)"/>
+
+    <!-- Normal Connecting Lines -->
+    <g stroke="#2a3d52" stroke-width="1.6" fill="none" marker-end="url(#arNormal)">
+      <path d="M125,75  L300,72"/>
+      <path d="M125,75  L300,140"/>
+      <path d="M125,145 L300,140"/>
+      <path d="M125,215 L300,205"/>
+      <path d="M125,215 L300,140"/>
+      <path d="M425,72  L605,75"/>
+      <path d="M425,205 L605,215"/>
+    </g>
+
+    <!-- Highlighted High-Risk Fraud Connection Path -->
+    <g stroke="url(#fraudEdge)" stroke-width="2.6" fill="none" marker-end="url(#arFraud)">
+      <path d="M425,140 L605,146" stroke-dasharray="6 3"/>
+    </g>
+
+    <!-- Cardholder Entities -->
+    <g>
+      <rect x="40" y="55" width="85" height="40" rx="8" fill="#152130" stroke="#0076CE" stroke-width="1.4"/>
+      <text x="82" y="74" fill="#ffffff" font-size="11" font-weight="600" text-anchor="middle">User #1042</text>
+      <text x="82" y="87" fill="#62778f" font-size="8.5" font-family="monospace" text-anchor="middle">Riyadh, SA</text>
+
+      <rect x="40" y="125" width="85" height="40" rx="8" fill="#152130" stroke="#0076CE" stroke-width="1.4"/>
+      <text x="82" y="144" fill="#ffffff" font-size="11" font-weight="600" text-anchor="middle">User #3891</text>
+      <text x="82" y="157" fill="#62778f" font-size="8.5" font-family="monospace" text-anchor="middle">Jeddah, SA</text>
+
+      <rect x="40" y="195" width="85" height="40" rx="8" fill="#152130" stroke="#0076CE" stroke-width="1.4"/>
+      <text x="82" y="214" fill="#ffffff" font-size="11" font-weight="600" text-anchor="middle">User #8114</text>
+      <text x="82" y="227" fill="#62778f" font-size="8.5" font-family="monospace" text-anchor="middle">Dammam, SA</text>
+    </g>
+
+    <!-- Transaction Edge Tokens -->
+    <g>
+      <rect x="305" y="54" width="118" height="34" rx="7" fill="#131c26" stroke="#2c3e53"/>
+      <text x="364" y="69" fill="#eaf1f8" font-size="10.5" font-family="monospace" text-anchor="middle">$41.50 · Card</text>
+      <text x="364" y="81" fill="#76b900" font-size="8" font-family="monospace" text-anchor="middle">NORMAL · 0.4%</text>
+
+      <!-- Fraudulent Transaction Box -->
+      <rect x="305" y="122" width="118" height="36" rx="7" fill="rgba(255,71,87,0.18)" stroke="#ff4757" stroke-width="2"/>
+      <text x="364" y="138" fill="#ff8a94" font-size="11.5" font-family="monospace" font-weight="bold" text-anchor="middle">$98.04 · Card</text>
+      <text x="364" y="151" fill="#ff4757" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle">FLAGGED · 98.2%</text>
+
+      <rect x="305" y="188" width="118" height="34" rx="7" fill="#131c26" stroke="#2c3e53"/>
+      <text x="364" y="203" fill="#eaf1f8" font-size="10.5" font-family="monospace" text-anchor="middle">$212.00 · Card</text>
+      <text x="364" y="215" fill="#76b900" font-size="8" font-family="monospace" text-anchor="middle">NORMAL · 0.2%</text>
+    </g>
+
+    <!-- Merchant Entities -->
+    <g>
+      <rect x="610" y="55" width="105" height="40" rx="8" fill="#152130" stroke="#2c3e53"/>
+      <text x="662" y="74" fill="#eaf1f8" font-size="11" font-weight="500" text-anchor="middle">Supermarket</text>
+      <text x="662" y="87" fill="#62778f" font-size="8.5" font-family="monospace" text-anchor="middle">Milan, IT</text>
+
+      <!-- Compromised Merchant Hub -->
+      <rect x="605" y="123" width="115" height="44" rx="8" fill="#2d161a" stroke="#ff4757" stroke-width="2"/>
+      <text x="662" y="142" fill="#ff8a94" font-size="11" font-weight="bold" text-anchor="middle">Boutique Roma</text>
+      <text x="662" y="157" fill="#ff4757" font-size="8.5" font-family="monospace" font-weight="bold" text-anchor="middle">Rome, IT · CLUSTER</text>
+
+      <rect x="610" y="195" width="105" height="40" rx="8" fill="#152130" stroke="#2c3e53"/>
+      <text x="662" y="214" fill="#eaf1f8" font-size="11" font-weight="500" text-anchor="middle">Fuel Station</text>
+      <text x="662" y="227" fill="#62778f" font-size="8.5" font-family="monospace" text-anchor="middle">Turin, IT</text>
+    </g>
+
+    <!-- Bottom explanatory label -->
+    <rect x="80" y="246" width="600" height="24" rx="6" fill="#0d141e" stroke="#22303f"/>
+    <text x="380" y="262" fill="#94a7bc" font-size="10.5" font-family="monospace" text-anchor="middle">
+      The model scores the transaction <tspan fill="#ff8a94">together with its graph neighbourhood</tspan> — three cards, one distant merchant
+    </text>
+  </svg>
+  <div class="cap">
+    A rules engine watching for unusual transaction amounts passes the $98.04 charge without issue.
+    The GNN flags it at 98% because it connects to an entity cluster where other compromised cards transacted.
+  </div>
+</div>
+
+<div class="section-note">How it works</div>
+<div class="steps">
+  <div class="step"><div class="num">01</div><div><h3>Build the graph</h3>
+    <p style="margin:0">Cardholders, transactions and merchants become nodes; every payment becomes
+    edges. 301,524 training transactions across 4,873 cardholders and 42,942 merchants.</p></div></div>
+  <div class="step"><div class="num">02</div><div><h3>Learn the neighbourhood</h3>
+    <p style="margin:0">A GraphSAGE network compresses each transaction <em>and its surroundings</em>
+    into a 32-dimensional embedding — so a transaction is represented by the company it keeps.</p></div></div>
+  <div class="step"><div class="num">03</div><div><h3>Classify and explain</h3>
+    <p style="margin:0">XGBoost scores those embeddings, and Shapley value sampling attributes each
+    decision back to human-readable features on demand.</p></div></div>
+</div>
+
+<div class="section-note">Measured on this machine</div>
+<div class="grid3">
+  <div class="stat"><b>589,528</b><span>transactions scored per second</span><i>25,803 in 0.044 s on GB10</i></div>
+  <div class="stat"><b>0.958</b><span>F1 score</span><i>precision 94.3% · recall 97.3%</i></div>
+  <div class="stat"><b>41.7 s</b><span>to preprocess 24.4M rows</span><i>graph construction on GPU</i></div>
+  <div class="stat"><b>23.0 s</b><span>to train end to end</span><i>GNN + XGBoost on Grace Blackwell</i></div>
+  <div class="stat"><b>3.3 s</b><span>per live explanation</span><i>Shapley, computed on demand</i></div>
+  <div class="stat"><b>9.4 s</b><span>full restart to serving</span><i>cold boot recovery</i></div>
+</div>
+
+<div class="section-note">What you will see in the live interface</div>
+<div class="mockup">
+  <div class="mockup-bar">
+    <div class="mockup-dots"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span></div>
+    <div class="mockup-title">GNN Fraud Detection Console — Port 8090</div>
+    <span class="mockup-badge">LIVE ENGINE</span>
+  </div>
+  <img src="assets/img/fraud-ui.jpg" alt="The live fraud detection interface">
+</div>
+<p>Transactions stream in at the left. A flagged one freezes in the centre with its real
+details. The attribution behind the decision appears on the right.</p>
+
+<p>A transaction of <strong>$98.04 at a clothing merchant in Rome</strong> is flagged at 98% confidence.
+Nothing about the amount is unusual. The explanation shows why: <strong>merchant city</strong> dominates
+the decision, while <strong>transaction amount contributes under 1%</strong> as much. A rules engine
+watching for large or irregular amounts drives straight past it.</p>
+
+<div class="mockup">
+  <div class="mockup-bar">
+    <div class="mockup-dots"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span></div>
+    <div class="mockup-title">Shapley Attribution — Feature Importance Breakdown</div>
+    <span class="mockup-badge">EXPLAINABLE AI</span>
+  </div>
+  <img src="assets/img/fraud-explain.jpg" alt="Shapley attribution for a flagged transaction">
+</div>
+
+<div class="section-note">Beyond supervised learning</div>
+<p>A second tab shows a different model entirely: a <strong>29-million-parameter transaction foundation
+model</strong> with a 6,251-token financial vocabulary, trained only to predict a cardholder's next
+transaction — never shown a fraud label. Projected into two dimensions, fraud still clusters.</p>
+
+<div class="mockup">
+  <div class="mockup-bar">
+    <div class="mockup-dots"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span></div>
+    <div class="mockup-title">Transaction Foundation Model — 2D Embedding Projection</div>
+    <span class="mockup-badge">29M PARAMETERS</span>
+  </div>
+  <img src="assets/img/fraud-embed.jpg" alt="Transaction embedding space">
+</div>
+<p>Adding those embeddings to the production fraud features lifted average precision by
+<strong>26.9%</strong> — fewer false alarms at the same catch rate.</p>
+<div class="note"><b>Said plainly</b><p>The embeddings alone score far worse than ordinary features.
+They complement feature engineering; they do not replace it.</p></div>
+
+<div class="section-note">Why a rules engine misses it</div>
+<div class="vs">
+  <div class="no"><div class="t">Rules engine sees</div>
+    <p>A $98.04 card-present purchase at a clothing merchant. Within the cardholder's normal
+    spending range. No velocity breach. No flagged category. <strong>Approved.</strong></p></div>
+  <div class="yes"><div class="t">The graph sees</div>
+    <p>That merchant sits in a cluster where several compromised cards were used within days,
+    in a city this cardholder has never transacted in. <strong>Flagged at 98%.</strong></p></div>
+</div>
+
+<details class="reveal"><summary>Why is 0.958 an F1 score and not "95.8% accurate"?</summary>
+<div class="body">
+<p>At a 0.122% fraud rate, a model that never flags anything is <strong>99.88% accurate</strong>.
+Accuracy rewards ignoring the problem, so it is the wrong measure entirely.</p>
+<p>F1 balances two things a fraud team actually argues about: <strong>precision</strong> — of the
+transactions we flagged, how many were really fraud, which is the cost in false alarms and blocked
+customers — and <strong>recall</strong> — of the real fraud, how much did we catch.</p>
+<p>Here that is 94.3% precision at 97.3% recall. Where you sit between those two is a business
+decision about the cost of a declined good customer versus a missed fraud, not a modelling one.</p>
+</div></details>
+
+<div class="section-note">Honest framing</div>
+<div class="note"><b>These metrics are a benchmark, not a production operating point</b>
+<p>Preprocessing undersamples the majority class, so the held-out set runs at 8.09% fraud against a
+true base rate of 0.122%. At the real rate the false-positive economics change materially, and any
+pilot must be re-measured on live distributions. The train/validate/test split is temporal — before
+2018, 2018, after 2018 — so it is a backtest rather than a shuffled split.</p></div>
+<p>The interface also shows ground truth on every transaction, including its 123 false positives and
+56 misses. That is deliberate.</p>
+
+<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:1.8rem">
+  <a class="launch" href="http://localhost:8090" target="_blank">Open the live demo →</a>
+  <a class="launch alt" href="index.html">Back to overview</a>
+</div>
+</main>
+<footer class="site"><div>
+  <span>Money20/20 Middle East · Riyadh · 14–16 September 2026</span>
+  <span>Dell Technologies with NVIDIA</span>
+  <span class="tag"><span class="dot"></span> No network required</span>
+</div></footer>
+<script>
+document.querySelectorAll('a[href^="http://localhost:"]').forEach(a=>{
+  a.href = a.href.replace('localhost', location.hostname);
+});
+const io = new IntersectionObserver((es)=>{
+  es.forEach(e=>{ if(!e.isIntersecting) return;
+    e.target.querySelectorAll('.bar-fill').forEach((b,i)=>{
+      setTimeout(()=>{ b.style.width = b.dataset.w + '%'; }, i*70);
+    });
+    io.unobserve(e.target);
+  });
+},{threshold:.25});
+document.querySelectorAll('[data-animate]').forEach(el=>io.observe(el));
+</script>
+</div>
+</div>
+</body></html>

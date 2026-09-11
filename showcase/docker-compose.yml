@@ -1,0 +1,9 @@
+services:
+  showcase:
+    image: nginx:alpine
+    container_name: money2020-showcase
+    restart: unless-stopped
+    ports:
+      - "${SHOWCASE_PORT:-8080}:80"
+    volumes:
+      - ./:/usr/share/nginx/html:ro

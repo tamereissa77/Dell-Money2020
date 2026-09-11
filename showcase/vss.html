@@ -1,0 +1,239 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dell Technologies · Video Search &amp; Summarisation · NVIDIA Blueprint</title>
+<link rel="stylesheet" href="assets/style.css">
+</head><body>
+<div class="shell">
+<aside class="side">
+  <div class="lockup">
+    <img src="assets/dell-logo.png?v=2" alt="Dell Technologies" class="d">
+    <span class="sep"></span>
+    <img src="assets/nvidia-white.png" alt="NVIDIA" class="n">
+  </div>
+  <div class="side-label">Start here</div>
+  <nav class="side-nav">
+    <a href="index.html"><span class="k">Overview</span><span class="t">All six use cases</span></a>
+  </nav>
+  <div class="side-label">The use cases</div>
+  <nav class="side-nav">
+    <a href="fraud.html" style="--ac:var(--green)"><span class="k">01 · Fraud operations</span><span class="t">Real-time card fraud detection</span></a>
+    <a href="portfolio.html" style="--ac:var(--dell-lt)"><span class="k">02 · Treasury &amp; wealth</span><span class="t">Portfolio optimisation under tail risk</span></a>
+    <a href="documents.html" style="--ac:var(--amber)"><span class="k">03 · Back office</span><span class="t">Arabic document intelligence</span></a>
+    <a href="loan.html" style="--ac:var(--dell)"><span class="k">04 · Retail lending</span><span class="t">Automated loan origination</span></a>
+    <a href="vss.html" class="on" style="--ac:var(--cyan)"><span class="k">05 · Physical security</span><span class="t">Video search and summarisation</span></a>
+    <a href="aiops.html" style="--ac:var(--purple)"><span class="k">06 · Operational resilience</span><span class="t">AIOps</span></a>
+  </nav>
+  <div class="side-foot">
+    <strong>Money20/20 Middle East</strong><br>
+    Riyadh · 14–16 September 2026<br><br>
+    Dell Technologies with NVIDIA
+  </div>
+</aside>
+<div class="content">
+<main>
+
+<section class="hero">
+  <div class="eyebrow" style="--ac:var(--cyan)">05 · Physical security</div>
+  <h1>Ask a question of the footage,<br>instead of watching it</h1>
+  <p class="lede">Every bank branch, ATM vestibule and cash centre records video that nobody watches until
+    an incident or dispute arrives — and then staff scrub through hours of tape. This blueprint makes recorded footage
+    searchable in natural language and summarises what happened without anyone reviewing frame-by-frame.</p>
+  <div class="chips">
+    <span class="chip"><b>Vision AI</b>Cosmos Reason 8B + Nemotron Nano 9B</span>
+    <span class="chip"><b>Blueprint</b>NVIDIA VSS (Video Search &amp; Summarisation)</span>
+    <span class="chip on"><span class="dot"></span>Runs locally on GB10</span>
+    <span class="chip"><b>Privacy</b>No video frames leave the building</span>
+  </div>
+
+  <div class="hero-media" style="--ac:var(--cyan)">
+    <img src="assets/img/hero-vss.jpg" alt="Video Search and Summarisation AI Operations Center" class="hero-media-img">
+    <div class="hero-media-overlay"></div>
+    <div class="hero-media-badge">
+      <span class="dot"></span> Dell Technologies Physical Security AI · Multimodal Video Search &amp; Summarisation
+    </div>
+  </div>
+</section>
+
+<div class="section-note">The problem</div>
+<p>A customer dispute arrives three days after an event: the customer states an ATM failed to dispense SAR 5,000 cash,
+even though their account was debited. An operations officer must identify the branch, locate the camera angles, and scrub
+through hours of footage to determine what physically took place.</p>
+<p>Conventional video analytics only triggers on predefined rigid tripwires: motion in a polygon, a virtual line crossed, or face recognition.
+Any novel or contextual question requires manual human video review.</p>
+
+<div class="section-note">The idea in one picture</div>
+<div class="diagram">
+  <div class="diagram-bar">
+    <div class="diagram-title" style="--ac:var(--cyan)">
+      <span class="dot"></span> Natural Language Video Semantic Timeline Search
+    </div>
+    <span class="diagram-pill">Continuous Frame Understanding · Zero Cloud Egress</span>
+  </div>
+
+  <svg viewBox="0 0 760 300" role="img" aria-label="Hours of footage reduced to a few relevant moments with semantic search">
+    <defs>
+      <linearGradient id="vssGlow" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.8"/>
+        <stop offset="100%" stop-color="#0076CE" stop-opacity="0.8"/>
+      </linearGradient>
+    </defs>
+
+    <!-- Natural Language Query Bar Header -->
+    <rect x="30" y="15" width="700" height="42" rx="8" fill="#131d2a" stroke="#22d3ee" stroke-width="1.5"/>
+    <circle cx="56" cy="36" r="10" fill="rgba(34,211,238,0.2)"/>
+    <path d="M52,36 L60,36 M56,32 L56,40" stroke="#22d3ee" stroke-width="1.8"/>
+    <text x="80" y="40" fill="#ffffff" font-size="12" font-family="monospace" font-weight="600">
+      Query: <tspan fill="#22d3ee">"Find when a person approached the ATM after 02:00 and the dispenser failed"</tspan>
+    </text>
+    <rect x="630" y="24" width="85" height="24" rx="5" fill="#22d3ee"/>
+    <text x="672" y="39" fill="#070a0e" font-size="10" font-family="monospace" font-weight="bold" text-anchor="middle">SEARCH</text>
+
+    <!-- 10-Hour Recording Baseline Track -->
+    <rect x="30" y="75" width="700" height="34" rx="6" fill="#111822" stroke="#24374a"/>
+    <text x="44" y="96" fill="#62778f" font-size="10" font-family="monospace">20:00 (Closing)</text>
+    <text x="716" y="96" fill="#62778f" font-size="10" font-family="monospace" text-anchor="end">06:00 (Opening)</text>
+    <text x="380" y="96" fill="#8ba0b6" font-size="11" text-anchor="middle">10 hours of unmonitored overnight recording (1,080,000 raw frames)</text>
+
+    <!-- Semantic Waveform Heatmap (Activity and Relevance) -->
+    <path d="M30,135 Q100,133 160,132 T220,118 T260,78 T300,128 T420,134 T520,86 T560,134 T730,135" stroke="rgba(34,211,238,0.3)" stroke-width="1.5" fill="none"/>
+    <path d="M240,130 L260,78 L280,130 Z" fill="rgba(34,211,238,0.2)"/>
+    <path d="M500,130 L520,86 L540,130 Z" fill="rgba(34,211,238,0.2)"/>
+
+    <!-- Keyframe Match 1 Callout Card -->
+    <g>
+      <line x1="260" y1="109" x2="260" y2="155" stroke="#22d3ee" stroke-width="2" stroke-dasharray="3 2"/>
+      <circle cx="260" cy="92" r="7" fill="#22d3ee"/>
+      
+      <rect x="130" y="155" width="260" height="96" rx="8" fill="#15212f" stroke="#22d3ee" stroke-width="1.5"/>
+      <!-- Video frame thumbnail placeholder -->
+      <rect x="142" y="167" width="68" height="50" rx="4" fill="#090f16" stroke="#22d3ee"/>
+      <circle cx="176" cy="188" r="8" fill="#ff4757"/>
+      <rect x="150" y="200" width="52" height="12" rx="2" fill="rgba(34,211,238,0.3)"/>
+      <text x="176" y="226" fill="#22d3ee" font-size="7.5" font-family="monospace" text-anchor="middle">CAM 02 · 02:14:18</text>
+
+      <text x="220" y="182" fill="#ffffff" font-size="11" font-weight="600">Moment 1 · 02:14:18</text>
+      <rect x="330" y="170" width="50" height="16" rx="3" fill="rgba(34,211,238,0.2)"/>
+      <text x="355" y="181" fill="#22d3ee" font-size="8" font-family="monospace" text-anchor="middle">96% MATCH</text>
+      <text x="220" y="198" fill="#8ba0b6" font-size="9">Customer enters vestibule,</text>
+      <text x="220" y="210" fill="#8ba0b6" font-size="9">card inserted, dispenser</text>
+      <text x="220" y="222" fill="#ff8a94" font-size="9" font-weight="bold">jam error code displays.</text>
+    </g>
+
+    <!-- Keyframe Match 2 Callout Card -->
+    <g>
+      <line x1="520" y1="109" x2="520" y2="155" stroke="#22d3ee" stroke-width="2" stroke-dasharray="3 2"/>
+      <circle cx="520" cy="92" r="7" fill="#22d3ee"/>
+
+      <rect x="440" y="155" width="260" height="96" rx="8" fill="#15212f" stroke="#0076CE" stroke-width="1.5"/>
+      <!-- Video frame thumbnail placeholder -->
+      <rect x="452" y="167" width="68" height="50" rx="4" fill="#090f16" stroke="#0076CE"/>
+      <circle cx="486" cy="188" r="8" fill="#4aa8e8"/>
+      <rect x="460" y="200" width="52" height="12" rx="2" fill="rgba(0,118,206,0.3)"/>
+      <text x="486" y="226" fill="#4aa8e8" font-size="7.5" font-family="monospace" text-anchor="middle">CAM 02 · 02:17:40</text>
+
+      <text x="530" y="182" fill="#ffffff" font-size="11" font-weight="600">Moment 2 · 02:17:40</text>
+      <rect x="640" y="170" width="50" height="16" rx="3" fill="rgba(0,118,206,0.2)"/>
+      <text x="665" y="181" fill="#4aa8e8" font-size="8" font-family="monospace" text-anchor="middle">89% MATCH</text>
+      <text x="530" y="198" fill="#8ba0b6" font-size="9">Customer inspects receipt,</text>
+      <text x="530" y="210" fill="#8ba0b6" font-size="9">waves at security camera,</text>
+      <text x="530" y="222" fill="#8ba0b6" font-size="9">exits ATM area calmly.</text>
+    </g>
+
+    <text x="380" y="280" fill="#8ba0b6" font-size="10.5" font-family="monospace" text-anchor="middle">
+      Hours of footage indexed by open-vocabulary semantic embeddings — resolved in seconds
+    </text>
+  </svg>
+
+  <div class="cap">
+    Search is conducted over what the vision-language model understood in the scene, not over manual tags
+    someone remembered to register in advance.
+  </div>
+</div>
+
+<div class="section-note">How it works</div>
+<div class="steps">
+  <div class="step"><div class="num">01</div><div><h3>On-device video ingestion</h3>
+    <p style="margin:0">Recorded RTSP streams or local video files are parsed natively on the GB10 hardware —
+    zero footage is transmitted over the internet.</p></div></div>
+  <div class="step"><div class="num">02</div><div><h3>Continuous vision-language description</h3>
+    <p style="margin:0">Cosmos Reason 8B describes continuous actions and events in natural language sentences,
+    capturing nuances that bounding boxes miss.</p></div></div>
+  <div class="step"><div class="num">03</div><div><h3>Semantic search &amp; summarisation</h3>
+    <p style="margin:0">Ask questions in conversational English or Arabic and instantly receive keyframe timestamps
+    with executive factual summaries of the incident.</p></div></div>
+</div>
+
+<div class="section-note">What you will see in the live interface</div>
+<div class="mockup">
+  <div class="mockup-bar">
+    <div class="mockup-dots"><span class="mockup-dot r"></span><span class="mockup-dot y"></span><span class="mockup-dot g"></span></div>
+    <div class="mockup-title">NVIDIA VSS Blueprint Console — Port 3000</div>
+    <span class="mockup-badge">ON-DEVICE VLM</span>
+  </div>
+  <img src="assets/img/vss-ui.jpg" alt="The VSS blueprint interface">
+</div>
+<p>Ask a question of branch footage and get key moments returned instantly, each accompanied by the model's
+synthesized textual description of actions observed in the camera frame.</p>
+
+<div class="section-note">Where banks deploy this</div>
+<ul class="plain">
+  <li><strong>ATM &amp; Cash-Centre Disputes:</strong> Isolate the exact transaction window and confirm whether cash dispensed in minutes rather than days.</li>
+  <li><strong>Branch Security &amp; Investigations:</strong> Reconstruct the exact sequence of events during a branch emergency without reviewing hours of redundant video.</li>
+  <li><strong>Queue &amp; Service Experience:</strong> Measure customer wait times, counter density, and service delays across branch networks without deploying single-purpose IoT sensors.</li>
+  <li><strong>Vault &amp; Compliance Audit:</strong> Validate dual-control cash handling protocols, safe entry procedures, and unauthorized access.</li>
+</ul>
+
+<div class="vs">
+  <div class="no"><div class="t">Conventional Video Analytics</div>
+    <p>Answers only what was configured before the fact — motion in a box, line crossed. If a new type of dispute arises,
+    existing footage cannot answer it without human eyes.</p></div>
+  <div class="yes"><div class="t">Vision-Language Search</div>
+    <p>Answers unanticipated questions asked in conversational language, against footage that has already been recorded.</p></div>
+</div>
+
+<div class="section-note">Investigation elapsed time</div>
+<div class="bars">
+  <div class="bar-row"><span class="lbl">Manual tape review</span><span class="bar-track"><i class="bar-fill" style="width:100%" data-w="100"></i></span><span class="bar-val">Hours</span></div>
+  <div class="bar-row hot"><span class="lbl">Semantic AI search</span><span class="bar-track"><i class="bar-fill" style="width:6%" data-w="6"></i></span><span class="bar-val">Seconds</span></div>
+</div>
+
+<details class="reveal"><summary>How does this differ from facial recognition?</summary>
+<div class="body">
+<p>This is not biometric facial identification. There is no gallery of human faces and no attempt to determine individual identity.
+The model describes <em>actions and physical context</em> — a customer approached an ATM, a drawer opened, an object was left on a counter.</p>
+<p>This distinction is critical under Saudi Personal Data Protection Law (PDPL) and global privacy frameworks, allowing institutions
+to audit security without creating biometric surveillance risks.</p>
+</div></details>
+
+<div class="section-note">Honest framing</div>
+<div class="note"><b>Search and summarisation, not surveillance</b>
+<p>This answers questions about security footage an institution already lawfully records. Deploying it requires rigorous
+governance, retention schedules, and access logs — running on-device ensures the data never leaves bank sovereignty.</p></div>
+
+<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:1.8rem">
+  <a class="launch" href="http://localhost:3000" target="_blank" style="background:#22d3ee;color:#070a0e">Open the live demo →</a>
+  <a class="launch alt" href="index.html">Back to overview</a>
+</div>
+</main>
+<footer class="site"><div>
+  <span>Money20/20 Middle East · Riyadh · 14–16 September 2026</span>
+  <span>Dell Technologies with NVIDIA</span>
+  <span class="tag"><span class="dot"></span> No network required</span>
+</div></footer>
+<script>
+document.querySelectorAll('a[href^="http://localhost:"]').forEach(a=>{
+  a.href = a.href.replace('localhost', location.hostname);
+});
+const io = new IntersectionObserver((es)=>{
+  es.forEach(e=>{ if(!e.isIntersecting) return;
+    e.target.querySelectorAll('.bar-fill').forEach((b,i)=>{
+      setTimeout(()=>{ b.style.width = b.dataset.w + '%'; }, i*70);
+    });
+    io.unobserve(e.target);
+  });
+},{threshold:.25});
+document.querySelectorAll('[data-animate]').forEach(el=>io.observe(el));
+</script>
+</div>
+</div>
+</body></html>
