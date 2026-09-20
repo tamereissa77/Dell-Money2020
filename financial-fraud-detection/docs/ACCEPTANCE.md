@@ -1,0 +1,129 @@
+# Acceptance criteria — results
+
+Measured on `gb10-galeneai`, 2026-09-20. Stage 1 covers criteria 1–6; the rest
+are recorded as not-yet-tested so nothing reads as passing that has not run.
+
+| # | Criterion | Stage | Result |
+|---|---|---|---|
+| 1 | `v1-money2020` reproduces the original demo | 1 | **PASS** (see below) |
+| 2 | `offline-load && start` < 90 s, no internet | 5 | **not tested** — and see the note on the budget |
+| 3 | Cable unplugged: every view works | 5 | not tested |
+| 4 | ≥ 5,000 TPS end-to-end, stable queue, 10 min | 1 | **PASS** — 600 s soak at 6,911/6,912 TPS, break-even |
+| 5 | Batch throughput within 10 % of 589 k/s | 1 | **PASS** — 575,775/s, within 2.3 % |
+| 6 | Single-txn explanation ≤ 3.5 s, per-decision | 1 | **PASS warm / FAIL cold** (details below) |
+| 7 | Five scenarios inject on demand | 2 | 1 of 5 implemented |
+| 8 | `mule-fanin-fanout` caught by model, missed by stub | 2 | not started |
+| 9 | No case closes without a named human action | 3 | not started |
+| 10 | Evidence pack exports; tamper fails verification | 3 | not started |
+| 11 | Cited draft in Arabic and English | 4 | not started |
+| 12 | Template fallback with the LLM stopped | 4 | not started |
+| 13 | Broker killed mid-demo: degraded banner, recovers | 5 | partial — `/api/stream` reports `degraded`; banner is Stage 5 |
+| 14 | Full power-cycle recovery ≤ 30 s | 5 | not tested |
+| 15 | `docker manifest inspect` confirms arm64 for all images | 5 | **partial PASS** — all four current images verified arm64 |
+
+---
+
+## 1 — v1 still reproduces
+
+`v1-money2020` is a branch at commit `97ffcf4`, which is the working booth state
+frozen before any v2 work. The v2 default preserves it at runtime too:
+`FEED_SOURCE` defaults to `file`, so the UI walks the pre-scored test set
+exactly as v1 did. The streaming path is opt-in.
+
+`make verify` on the v1 path: **ALL CHECKS PASSED** — triton health 200, demo
+api 200, scoring OK, feed has data, live explanation top driver
+`Merchant city` +10.43.
+
+## 4 — sustained throughput
+
+**10-minute soak, 7,000 TPS target** (the authoritative run):
+
+```
+duration : 600s
+produced : 6,911 TPS
+scored   : 6,912 TPS
+backlog  : -144 msgs      (break-even)
+errors   : 0
+```
+
+**Steady state at 5,000 TPS**, sampled every 15 s for a minute:
+
+| t | e2e worst | e2e mean | scored rate |
+|---|---|---|---|
+| +0 s | 94.49 ms | 65.36 ms | — |
+| +15 s | 81.29 ms | 54.92 ms | 4,932 TPS |
+| +30 s | 75.15 ms | 53.29 ms | 4,932 TPS |
+| +45 s | 94.03 ms | 64.76 ms | 4,949 TPS |
+| +60 s | 73.91 ms | 55.57 ms | 4,949 TPS |
+
+Flat, not growing. `TOTAL-LAG` settled at 5,275. **Criterion met**, and the soak
+shows the pipeline also sustains ~6,900 TPS.
+
+What it does *not* have is spare capacity to **drain** a backlog quickly: after
+a `scoring-svc` restart at a 7,000 TPS load, lag reached 109,548 and e2e worst
+hit 13.6 s, taking ~7 minutes at 5,000 TPS to clear. Recovery is graceful —
+nothing crashes, no messages lost, `errors` stays 0 — but a mid-demo restart is
+visible for minutes. A second `scoring-svc` replica taking three of the six
+partitions is the fix; the partition count was chosen to allow it.
+
+### Two measurement corrections
+
+Earlier figures in this file were wrong and are superseded above:
+
+1. **"~414,000 backlog at 7,000 TPS" was a measurement error.** It subtracted
+   the generator's lifetime `emitted` from the scorer's lifetime `scored`, but
+   `scoring-svc` starts at `offset=latest` and so legitimately never sees
+   messages produced before it joined. Cumulative counters with different start
+   points cannot be differenced. `rpk group describe` is the authority.
+2. **"e2e 32 ms" understated latency.** `scoring-svc` took e2e from `msgs[-1]`,
+   the *newest* message in each batch, which hides consumer lag entirely — it
+   still read ~30 ms with 16 k messages of backlog. Now fixed to report the
+   **worst** case in the batch, with mean and best alongside.
+
+A third artifact worth knowing: `TOTAL-LAG` includes up to
+`auto.commit.interval.ms` (default 5 s) of already-processed messages, which at
+5,000 TPS is ~25,000. Apparent lag below roughly that figure is bookkeeping,
+not backlog.
+
+## 5 — batch throughput preserved
+
+25,803 transactions in 0.0448 s = **575,775/s**, against the recorded 589,528/s
+baseline. Within 2.3 %, comfortably inside the 10 % allowance.
+
+## 6 — explanation latency and per-decision attribution
+
+| Condition | Latency |
+|---|---|
+| Cold (before `make prewarm`) | **5.31 s** — fails the 3.5 s bar |
+| Warm (after `make prewarm`) | **3.256 s**, repeatable | 
+| Pre-computed hero | 0.0015 s (served from cache) |
+
+**This criterion is prewarm-dependent.** `make prewarm` takes 15.1 s and must
+run before the demo is measured or shown. Any v2 start path that omits it fails
+criterion 6 on the first explanation.
+
+Attribution is per-decision, not batch-averaged: `explain()` sends a
+single-transaction subgraph with `COMPUTE_SHAP` on. Verified distinct across
+transactions — the v1 verify step reports a specific top driver
+(`Merchant city` +10.43) for its chosen transaction.
+
+## Correctness check not in the brief
+
+The streaming path rebases each batch onto a dense subgraph, which is new logic
+and could silently change scores. Cross-checked streamed scores against v1
+batch scores for sampled transactions:
+
+```
+compared: 10   mismatches (>0.02): 0   max delta: 4.58e-07
+```
+
+Float noise. The subgraph remapping is faithful.
+
+## Note on criterion 2 — the 90-second budget
+
+`ffd-triton` is 36.3 GB and `ffd-demo` is 25.5 GB. `docker load` of ~62 GB
+cannot complete in 90 s on any disk in this class, before a broker and services
+are added. Mitigated in part by building `ffd-svc` **FROM** `ffd-demo`, so the
+v2 services add a wheel rather than a second 25 GB base — but the budget still
+needs renegotiating: either time only `start` (excluding `docker load`), or
+raise the number. Flagged rather than silently failed.

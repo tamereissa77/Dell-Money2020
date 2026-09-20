@@ -34,3 +34,6 @@ shared_data/
 
 # timestamped backups written during live debugging
 *.bak-*
+
+# hand-made pre-edit copies; the real v1 is the v1-money2020 branch
+*.v1

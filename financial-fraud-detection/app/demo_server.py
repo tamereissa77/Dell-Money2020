@@ -13,6 +13,12 @@ TRITON = os.environ.get("TRITON_URL", "localhost:8000")
 MODEL = "prediction_and_shapley_np"
 HERO_N = int(os.environ.get("HERO_N", "12"))
 
+# v2: where /api/feed gets its rows.
+#   "file"  - v1 behaviour, walk the pre-scored test set. Unchanged default, so
+#             the original three-minute booth demo runs exactly as before.
+#   "kafka" - consume txn.scored from the streaming pipeline.
+FEED_SOURCE = os.environ.get("FEED_SOURCE", "file").lower()
+
 MCC_NAMES = {5411:"Grocery",5812:"Restaurant",5541:"Fuel",5912:"Pharmacy",4121:"Rideshare",
   5621:"Clothing",7995:"Gambling",5999:"Retail",4900:"Utilities",5300:"Wholesale",
   5732:"Electronics",7011:"Hotel",4111:"Transit",5942:"Books",5661:"Shoes",
@@ -195,6 +201,53 @@ def row(i):
             "when": f'{int(d["Year"])}-{int(d["Month"]):02d}-{int(d["Day"]):02d}',
             "user_id": int(e_ut[0][i]), "merchant_id": int(e_tm[1][i])}
 
+# --- v2 streaming feed ------------------------------------------------------
+# A bounded ring of the most recent scored transactions. Bounded on purpose: at
+# 5,000 TPS an unbounded buffer is a memory leak with a countdown, and the UI
+# only ever renders the tail.
+STREAM, STREAM_LOCK = [], threading.Lock()
+STREAM_MAX = int(os.environ.get("STREAM_MAX", "2000"))
+STREAM_STATE = {"consumed": 0, "connected": False, "last_error": None,
+                "e2e_ms": 0.0, "model_ms": 0.0, "last_ms": 0.0}
+
+
+def _stream_consumer():
+    """Fill STREAM from txn.scored. Never fatal: if the broker dies the UI
+    degrades to a stale tail with a visible banner rather than white-screening."""
+    import sys
+    sys.path.insert(0, "/svc")
+    from common import pipeline as P
+    while True:
+        try:
+            P.wait_for_broker(timeout=300)
+            cons = P.consumer("demo-ui", [P.T_SCORED], offset="latest")
+            STREAM_STATE["connected"] = True
+            STREAM_STATE["last_error"] = None
+            print("[demo] stream feed connected", flush=True)
+            while True:
+                msg = cons.poll(0.5)
+                if msg is None or msg.error():
+                    continue
+                rec = P.decode(msg)
+                with STREAM_LOCK:
+                    STREAM.append(rec)
+                    if len(STREAM) > STREAM_MAX:
+                        del STREAM[:len(STREAM) - STREAM_MAX]
+                STREAM_STATE["consumed"] += 1
+                STREAM_STATE["e2e_ms"] = rec.get("e2e_latency_ms", 0.0)
+                STREAM_STATE["model_ms"] = rec.get("model_latency_ms", 0.0)
+                STREAM_STATE["last_ms"] = time.time() * 1000.0
+        except Exception as e:
+            STREAM_STATE["connected"] = False
+            STREAM_STATE["last_error"] = str(e)
+            print(f"[demo] stream feed down: {e}", flush=True)
+            time.sleep(3)
+
+
+if FEED_SOURCE == "kafka":
+    threading.Thread(target=_stream_consumer, daemon=True).start()
+
+
 app = Flask(__name__, static_folder="static")
 
 @app.get("/api/stats")
@@ -212,9 +265,45 @@ def stats():
 
 @app.get("/api/feed")
 def feed():
-    off = int(request.args.get("offset",0)); lim = min(int(request.args.get("limit",40)),200)
+    lim = min(int(request.args.get("limit",40)),200)
+    if FEED_SOURCE == "kafka":
+        # Newest first, and merge in the display fields the stream does not
+        # carry so the UI renders identically to the file-backed feed.
+        with STREAM_LOCK:
+            tail = list(STREAM[-lim:])[::-1]
+        out = []
+        for r in tail:
+            i = int(r["row"])
+            base = row(i)
+            base.update({"score": round(float(r["score"]),4), "pred": int(r["pred"]),
+                         "txn_id": r.get("txn_id"), "scenario": r.get("scenario"),
+                         "e2e_latency_ms": r.get("e2e_latency_ms"),
+                         "model_latency_ms": r.get("model_latency_ms")})
+            out.append(base)
+        return jsonify(out)
+    off = int(request.args.get("offset",0))
     idx = [(off+k) % len(SCORES) for k in range(lim)]
     return jsonify([row(i) for i in idx])
+
+
+@app.get("/api/stream")
+def stream_status():
+    """What the status bar needs: is the pipeline alive, and how far behind."""
+    with STREAM_LOCK:
+        depth = len(STREAM)
+    stale = (time.time()*1000.0 - STREAM_STATE["last_ms"]) if STREAM_STATE["last_ms"] else None
+    return jsonify({
+        "source": FEED_SOURCE,
+        "connected": STREAM_STATE["connected"],
+        "degraded": FEED_SOURCE == "kafka" and (
+            not STREAM_STATE["connected"] or (stale is not None and stale > 5000)),
+        "consumed": STREAM_STATE["consumed"],
+        "buffer": depth,
+        "stale_ms": round(stale, 1) if stale is not None else None,
+        "e2e_latency_ms": STREAM_STATE["e2e_ms"],
+        "model_latency_ms": STREAM_STATE["model_ms"],
+        "last_error": STREAM_STATE["last_error"],
+    })
 
 @app.get("/api/heroes")
 def heroes():
