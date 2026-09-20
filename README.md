@@ -11,6 +11,8 @@ no network at run time. Built for Money20/20 Middle East, Riyadh, 14–16 Septem
 |---|---|---|
 | [`financial-fraud-detection`](financial-fraud-detection/) | `fraud` | A graph neural network + XGBoost scoring 24.4M card transactions at ~589,000/sec, with a per-transaction Shapley explanation for every decision. Includes an embedding-space view from a 29M-parameter transaction foundation model. |
 | [`portfolio-optimization`](portfolio-optimization/) | `portfolio` | Mean-CVaR portfolio optimisation on NVIDIA cuOpt — 18× faster than CPU at 500 assets × 50,000 scenarios, reaching the same optimum. |
+| [`quant-signal-discovery`](quant-signal-discovery/) | `quant` | Three agents invent an alpha signal, write it as executable Python and backtest it on 14 years of S&P 500 prices — then read their own results and try again. NVIDIA Nemotron 3 Nano 30B A3B served locally; a full three-iteration loop runs in ~50–75 s. |
+| [`nemotron-voice-agent`](nemotron-voice-agent/) | `voice` | Speak to the GB10 and it speaks back. Nemotron ASR, a 30B Nemotron LLM and Magpie TTS all as local sidecars, WebRTC to the browser, nothing in the cloud at inference time. NVIDIA ships a first-class DGX Spark recipe, so this one needed no adaptation. **English only** — no Nemotron LLM supports Arabic. |
 | [`doc-element-extraction`](doc-element-extraction/) | `docs` | Document element extraction and knowledge-graph construction, including Arabic table extraction. Contributed by **iPulse-AI** under partnership. |
 
 ### Financial fraud detection
@@ -34,6 +36,46 @@ places* — merchant state (35.9%), merchant identity (34.9%), merchant city (32
 amount or timing. A $98 clothing purchase in Rome gets flagged at 98% confidence while the
 transaction amount contributes under 1% of the top driver's weight. That is precisely the
 signal a row-wise model cannot see and a graph can.
+
+### Quantitative signal discovery
+
+Based on the [NVIDIA Quantitative Signal Discovery Agent](https://github.com/NVIDIA-AI-Blueprints/quantitative-signal-discovery-agent),
+adapted to serve its model locally on GB10 instead of calling NVIDIA's hosted endpoint.
+
+| | |
+|---|---|
+| Full run, 3 iterations | **49-74 s** |
+| Model generation | **14.7 tok/s** (30B MoE, ~3B active, FP8) |
+| Backtest universe | 3,519 trading days x 380 tickers |
+| Network at run time | none |
+
+**The interesting result:** in a representative run the agents composed
+`Mul(Rank(TS_Return(Close, 20)), Rank(Decay_Linear(Volume, 20)))` -- momentum scaled by
+volume intensity -- and backtested it to a t-statistic of -5.2 over 3,494 periods. That is
+statistically real, but its information coefficient was 0.012 against a 0.02 bar, so the
+agent returned `best_effort` rather than claiming a win and went round the loop again. A
+system that says "significant but too weak to trade" is behaving like a quant.
+
+The booth screen is the Phoenix trace viewer on `:6006` -- every agent call, prompt, output
+and latency, live.
+
+### Nemotron Voice Agent
+
+Based on the [NVIDIA Nemotron Voice Agent](https://github.com/NVIDIA-AI-Blueprints/nemotron-voice-agent).
+The only blueprint here that needed no GB10 adaptation: NVIDIA ships a `dgx-spark` compose
+profile, the ASR NIM selects a `gpu=dgx_spark` build, and vLLM uses the FlashInfer CUTLASS
+NVFP4 kernel for `sm_121`. All three sidecar images publish `linux/arm64` manifests.
+
+ASR (~15 GB) + TTS (~14 GB) + LLM NVFP4 (~15 GB) share the one 128 GB unified memory. The same
+pipeline needs an 80 GB discrete GPU elsewhere.
+
+**Before the stand opens:** `make voice`, then `make voice-prewarm`, then accept the
+self-signed cert and grant microphone permission on the actual demo laptop. Use a wired
+headset — a built-in mic picks up the whole stand and turn detection never fires cleanly.
+
+> **Language:** English. The TTS can speak Arabic and the ASR can hear it, but the UI offers
+> only the intersection of ASR, TTS and LLM capability, and no Nemotron LLM supports Arabic
+> (English, German, Spanish, French, Italian, Japanese). Worth knowing at a Middle East event.
 
 ---
 

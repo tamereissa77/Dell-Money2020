@@ -1,0 +1,23 @@
+{
+  "timestamp": "20260912_172135",
+  "iteration": 2,
+  "selected_signal": "signal_exponential_liquidity_adjusted_momentum",
+  "signal_description": "```json\n[\n{\n  \"name\": \"Exponential Liquidity-Adjusted Momentum\",\n  \"formula\": \"Mul(TS_Return(Close, 5), Decay_Exp(Decay_Linear(Volume, 5), 5))\",\n  \"meaning\": \"5-day price momentum weighted by exponentially smoothed volume to capture short-term momentum bursts driven by recent trading activity\",\n  \"category\": \"momentum\",\n  \"data_fields_used\": [\n    \"Close\",\n    \"Volume\"\n  ],\n  \"operators_used\": [\n    \"Mul\",\n    \"TS_Return\",\n    \"Decay_Linear\",\n    \"Decay_Exp\"\n  ],\n  \"lookback_periods\": [\n    5\n  ]\n},\n{\n  \"name\": \"OpenInterest-Enhanced Volume Momentum\",\n  \"formula\": \"Mul(TS_Return(Close, 5), Mul(Decay_Exp(Volume, 5), TS_Return(Open_Interest, 5)))\",\n  \"meaning\": \"Combines short-term price momentum with volume momentum and open interest momentum to identify stocks experiencing accelerating liquidity and directional bias\",\n  \"category\": \"volume\",\n  \"data_fields_used\": [\n    \"Close\",\n    \"Volume\",\n    \"Open_Interest\"\n  ],\n  \"operators_used\": [\n    \"Mul\",\n    \"TS_Return\",\n    \"Decay_Exp\"\n  ],\n  \"lookback_periods\": [\n    5,\n    5,\n    5\n  ]\n}\n]\n```",
+  "signal_code": "import pandas as pd\nimport numpy as np\n\n\ndef Decay_Exp(x: pd.DataFrame, d: int) -> pd.DataFrame:\n    return x.ewm(span=d, adjust=False).mean()\n\n\ndef Decay_Linear(x: pd.DataFrame, d: int) -> pd.DataFrame:\n    weights = np.arange(1, d + 1)\n    weights = weights / weights.sum()\n    result = x.rolling(window=d).apply(lambda y: (y * weights).sum(), raw=True)\n    return result\n\n\ndef Mul(x: pd.DataFrame, y: pd.DataFrame) -> pd.DataFrame:\n    result = x * y\n    return result\n\n\ndef TS_Return(x: pd.DataFrame, d: int) -> pd.DataFrame:\n    return x.pct_change(d)\n\n\ndef signal_exponential_liquidity_adjusted_momentum(Close: pd.DataFrame, Volume: pd.DataFrame) -> pd.DataFrame:\n    \"\"\"Exponential liquidity adjusted momentum\"\"\"\n    return Mul(TS_Return(Close, 5), Decay_Exp(Decay_Linear(Volume, 5), 5))\n\ndef signal_openinterest_enhanced_volume_momentum(Close: pd.DataFrame, Volume: pd.DataFrame, Open_Interest: pd.DataFrame) -> pd.DataFrame:\n    \"\"\"Open interest enhanced volume momentum\"\"\"\n    return Mul(TS_Return(Close, 5), Mul(Decay_Exp(Volume, 5), TS_Return(Open_Interest, 5)))\n\n",
+  "evaluation_metrics": {
+    "mean_ic": -0.010183799938110678,
+    "ic_std": 0.15980577089238981,
+    "ic_ir": -0.06372610877092953,
+    "t_stat": -3.774931580737187,
+    "p_value": 0.00016270044440380715,
+    "num_periods": 3509,
+    "positive_ic_ratio": 0.48133371330863495,
+    "ic_percentiles": {
+      "5th": -0.27745835094646043,
+      "25th": -0.10665317189395035,
+      "50th": -0.007487805171416481,
+      "75th": 0.09170445487120664,
+      "95th": 0.24823525981025563
+    }
+  }
+}

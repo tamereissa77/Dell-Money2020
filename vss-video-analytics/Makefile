@@ -16,33 +16,35 @@ PROFILE ?= base
 ENVFILE := developer-profiles/dev-profile-$(PROFILE)/generated.env
 DC      := docker compose --env-file $(ENVFILE) -p $(PROJECT)
 
-.PHONY: up down start stop restart status ps logs remove redeploy
+.PHONY: up down start stop restart status ps logs remove redeploy urls
 
-# Resume if the containers are still there; recreate them from the existing
-# generated.env if a teardown removed them. Recreate needs no NGC key and no
-# rebuild — every image is already local and the named volumes (model caches,
-# postgres, phoenix) survive `down`. A full reset is `redeploy`: destructive,
-# needs NGC_CLI_API_KEY, never run implicitly.
+# `compose up -d` covers both cases: containers that exist and are unchanged get
+# started, and anything whose config changed gets recreated. That matters here
+# because browser-facing URLs (websocket, chat, API) are baked into container
+# env at create time — a plain `compose start` would resume them still pointing
+# at the previous venue's IP. Volumes and data-dir are untouched either way.
+# A full reset is `redeploy`: destructive, needs NGC_CLI_API_KEY, never implicit.
 up start:
-	@cd $(CDIR) && \
-	if [ "$$(docker ps -aq --filter label=com.docker.compose.project=$(PROJECT) | wc -l)" -gt 0 ]; then \
-	  echo "  resuming existing containers ..."; \
-	  $(DC) start; \
-	else \
-	  test -f "$(ENVFILE)" || { \
-	    echo "  ERROR: $(ENVFILE) is missing — this needs a full 'make redeploy'" >&2; \
-	    echo "         (destructive: wipes volumes and data-dir, requires NGC_CLI_API_KEY)" >&2; \
-	    exit 1; }; \
-	  echo "  no containers for project $(PROJECT) — recreating from $(ENVFILE) ..."; \
-	  $(DC) up -d; \
-	fi
+	@test -f "$(CDIR)/$(ENVFILE)" || { \
+	  echo "  ERROR: $(ENVFILE) is missing — this needs a full 'make redeploy'" >&2; \
+	  echo "         (destructive: wipes volumes and data-dir, requires NGC_CLI_API_KEY)" >&2; \
+	  exit 1; }
+	@$(MAKE) --no-print-directory -C $(CDIR) sync-ip PROFILE=$(PROFILE)
+	@cd $(CDIR) && $(DC) up -d --remove-orphans
 	@printf "  waiting for the agent UI to answer on :3000 "; \
 	for i in $$(seq 1 60); do \
 	  if [ "$$(curl -s -o /dev/null -w %{http_code} http://localhost:3000/ 2>/dev/null)" = "200" ]; then \
 	    echo " ready"; break; fi; \
 	  printf "."; sleep 5; \
 	done; echo ""
-	@echo "  VSS UI : http://localhost:3000  (agent UI)"
+	@echo "  VSS UI : http://$$(tailscale ip -4 2>/dev/null | head -1):3000  (agent UI)"
+
+# Show what the UI will hand the browser — the usual suspect when the venue
+# network changes and the UI loads but its websocket will not connect.
+urls:
+	@$(MAKE) --no-print-directory -C $(CDIR) show-ip PROFILE=$(PROFILE)
+	@cd $(CDIR) && $(DC) -f compose.yml config 2>/dev/null \
+	  | grep -E "NEXT_PUBLIC.*(WEBSOCKET|CHAT_COMPLETION|API_URL_BASE)" | sort -u | sed 's|^|  |'
 
 # Pause: frees GPU + RAM for the next demo, keeps containers so `up` can resume.
 down stop:

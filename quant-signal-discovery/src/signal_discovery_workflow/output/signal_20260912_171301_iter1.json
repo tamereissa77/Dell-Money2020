@@ -1,0 +1,23 @@
+{
+  "timestamp": "20260912_171301",
+  "iteration": 1,
+  "selected_signal": "signal_momentum_adjusted_volume",
+  "signal_description": "```json\n[\n{\n  \"name\": \"Momentum-Adjusted Volume\",\n  \"formula\": \"Mul(Rank(TS_Return(Close, 20)), Rank(Decay_Linear(Volume, 20)))\",\n  \"meaning\": \"Combines price momentum with weighted volume activity, scaling momentum by relative trading intensity\",\n  \"category\": \"momentum\",\n  \"data_fields_used\": [\n    \"Close\",\n    \"Volume\"\n  ],\n  \"operators_used\": [\n    \"Mul\",\n    \"Rank\",\n    \"TS_Return\",\n    \"Decay_Linear\"\n  ],\n  \"lookback_periods\": [\n    20\n  ]\n},\n{\n  \"name\": \"Volatility-Adjusted Momentum\",\n  \"formula\": \"Div(Rank(TS_Return(Close, 15)), Rank(TS_Var(Close, 15)))\",\n  \"meaning\": \"Measures momentum relative to recent price volatility, normalizing returns by standard deviation\",\n  \"category\": \"momentum\",\n  \"data_fields_used\": [\n    \"Close\"\n  ],\n  \"operators_used\": [\n    \"Div\",\n    \"Rank\",\n    \"TS_Return\",\n    \"TS_Var\"\n  ],\n  \"lookback_periods\": [\n    15,\n    15\n  ]\n}\n]",
+  "signal_code": "import pandas as pd\nimport numpy as np\n\n\ndef Decay_Linear(x: pd.DataFrame, d: int) -> pd.DataFrame:\n    weights = np.arange(1, d + 1)\n    weights = weights / weights.sum()\n    result = x.rolling(window=d).apply(lambda y: (y * weights).sum(), raw=True)\n    return result\n\n\ndef Div(x: pd.DataFrame, y: pd.DataFrame) -> pd.DataFrame:\n    result = x / y\n    return result\n\n\ndef Mul(x: pd.DataFrame, y: pd.DataFrame) -> pd.DataFrame:\n    result = x * y\n    return result\n\n\ndef Rank(x: pd.DataFrame) -> pd.DataFrame:\n    x = x.T\n    result = x.rank() / (len(x) + 1) \n    return result.T\n\n\ndef TS_Return(x: pd.DataFrame, d: int) -> pd.DataFrame:\n    return x.pct_change(d)\n\n\ndef TS_Var(x: pd.DataFrame, d: int) -> pd.DataFrame:\n    return x.rolling(window=d).var()\n\n\ndef signal_momentum_adjusted_volume(Close: pd.DataFrame, Volume: pd.DataFrame) -> pd.DataFrame:\n    \"\"\"Adjusted volume momentum\"\"\"\n    return Mul(Rank(TS_Return(Close, 20)), Rank(Decay_Linear(Volume, 20)))\n\ndef signal_volatility_adjusted_momentum(Close: pd.DataFrame) -> pd.DataFrame:\n    \"\"\"Volatility-adjusted momentum\"\"\"\n    return Div(Rank(TS_Return(Close, 15)), Rank(TS_Var(Close, 15)))\n\n",
+  "evaluation_metrics": {
+    "mean_ic": -0.01219937073988098,
+    "ic_std": 0.13773992914459696,
+    "ic_ir": -0.08856815024984001,
+    "t_stat": -5.235269279792755,
+    "p_value": 1.7446666067399974e-07,
+    "num_periods": 3494,
+    "positive_ic_ratio": 0.4676588437321122,
+    "ic_percentiles": {
+      "5th": -0.2450240542891709,
+      "25th": -0.0984921807858399,
+      "50th": -0.010675028006203697,
+      "75th": 0.0790540550334892,
+      "95th": 0.2102682249475037
+    }
+  }
+}

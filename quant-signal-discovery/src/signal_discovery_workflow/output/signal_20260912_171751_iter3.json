@@ -1,0 +1,23 @@
+{
+  "timestamp": "20260912_171751",
+  "iteration": 3,
+  "selected_signal": "signal_vol_trend_skew",
+  "signal_description": "```json\n[\n{\n  \"name\": \"Vol_Accel_Extreme\",\n  \"formula\": \"Rank_Mul(Rank_Div(TS_Std(Close,5), Rank_Mul(TS_Std(Close,20),10)), Rank_Mul(TS_Return(Open,60),5))\",\n  \"meaning\": \"Highlights stocks experiencing sudden spikes in realized volatility relative to medium-term dispersion, amplified by recent return acceleration and extreme tail weighting\",\n  \"category\": \"volatility\",\n  \"data_fields_used\": [\n    \"Close\",\n    \"Open\"\n  ],\n  \"operators_used\": [\n    \"Rank_Mul\",\n    \"Rank_Div\",\n    \"TS_Std\",\n    \"TS_Return\",\n    \"Rank_Mul\",\n    \"Rank_Mul\",\n    \"Rank_Mul\"\n  ],\n  \"lookback_periods\": [\n    5,\n    20,\n    60,\n    10,\n    5,\n    60,\n    5\n  ]\n},\n{\n  \"name\": \"Vol_Trend_Skew\",\n  \"formula\": \"Rank_Mul(TS_Skew(Close,120), Div(TS_Std(Close,30), TS_Mean(TS_Std(Close,20),120)))\",\n  \"meaning\": \"Identifies volatility accelerating with positive skewness while medium-term dispersion expands relative to its recent mean, signaling potential breakout momentum\",\n  \"category\": \"volatility\",\n  \"data_fields_used\": [\n    \"Close\"\n  ],\n  \"operators_used\": [\n    \"Rank_Mul\",\n    \"TS_Skew\",\n    \"Div\",\n    \"TS_Std\",\n    \"TS_Mean\",\n    \"Rank_Mul\"\n  ],\n  \"lookback_periods\": [\n    120,\n    30,\n    20,\n    120,\n    20,\n    120\n  ]\n}\n]\n```",
+  "signal_code": "import pandas as pd\nimport numpy as np\n\n\ndef Div(x: pd.DataFrame, y: pd.DataFrame) -> pd.DataFrame:\n    result = x / y\n    return result\n\n\ndef Rank_Div(x: pd.DataFrame, y: pd.DataFrame) -> pd.DataFrame:\n    x = x.T\n    y = y.T\n    rank_x = x.rank() / (len(x) + 1)\n    rank_y = y.rank() / (len(y) + 1)\n    return (rank_x / rank_y).T\n\n\ndef Rank_Mul(x: pd.DataFrame, y: pd.DataFrame) -> pd.DataFrame:\n    x = x.T\n    y = y.T\n    rank_x = x.rank() * (len(x) + 1)\n    rank_y = y.rank() * (len(y) + 1)\n    return (rank_x * rank_y).T\n\n\ndef TS_Mean(x: pd.DataFrame, d: int) -> pd.DataFrame:\n    return x.rolling(d).mean()\n\n\ndef TS_Return(x: pd.DataFrame, d: int) -> pd.DataFrame:\n    return x.pct_change(d)\n\n\ndef TS_Skew(x: pd.DataFrame, d: int) -> pd.DataFrame:\n    return x.rolling(window=d).skew()\n\n\ndef TS_Std(x: pd.DataFrame, d: int) -> pd.DataFrame:\n        result = x.rolling(window=d).std()\n        return result\n\n\ndef signal_vol_accel_extreme(Open: pd.DataFrame, Close: pd.DataFrame) -> pd.DataFrame:\n    \"\"\"Rank_Mul(Rank_Div(TS_Std(Close,5), Rank_Mul(TS_Std(Close,20),10)), Rank_Mul(TS_Return(Open,60),5))\"\"\"\n    return Rank_Mul(Rank_Div(TS_Std(Close, 5), Rank_Mul(TS_Std(Close, 20), 10)), Rank_Mul(TS_Return(Open, 60), 5))\n\ndef signal_vol_trend_skew(Close: pd.DataFrame) -> pd.DataFrame:\n    \"\"\"Rank_Mul(TS_Skew(Close,120), Div(TS_Std(Close,30), TS_Mean(TS_Std(Close,20),120)))\"\"\"\n    return Rank_Mul(TS_Skew(Close, 120), Div(TS_Std(Close, 30), TS_Mean(TS_Std(Close, 20), 120)))\n\n",
+  "evaluation_metrics": {
+    "mean_ic": -0.010410152569654503,
+    "ic_std": 0.11277514717923963,
+    "ic_ir": -0.09230892470580496,
+    "t_stat": -5.363458331266729,
+    "p_value": 8.713858878905967e-08,
+    "num_periods": 3376,
+    "positive_ic_ratio": 0.46830568720379145,
+    "ic_percentiles": {
+      "5th": -0.19722546639297855,
+      "25th": -0.08116989454150196,
+      "50th": -0.007904197441758418,
+      "75th": 0.06101169014627645,
+      "95th": 0.16764500260449797
+    }
+  }
+}

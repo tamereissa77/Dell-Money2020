@@ -27,3 +27,10 @@
 # deck working files (keep the PDF, drop scratch renders)
 deck/preview/*
 !deck/preview/*.pdf
+
+# real identity documents (national ID, bank statements, HR letters) - NEVER publish
+*/shared_data/
+shared_data/
+
+# timestamped backups written during live debugging
+*.bak-*
