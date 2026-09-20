@@ -248,6 +248,24 @@ if FEED_SOURCE == "kafka":
     threading.Thread(target=_stream_consumer, daemon=True).start()
 
 
+# --- stage 2: proxy the pipeline services ----------------------------------
+# The browser can only reach this container, so the comparison screen is served
+# its data through here rather than by exposing every service to the network.
+import urllib.request, urllib.error
+
+ALERT_URL = os.environ.get("ALERT_URL", "http://alert-svc:8094")
+SCREEN_URL = os.environ.get("SCREEN_URL", "http://screening-stub:8093")
+GEN_URL = os.environ.get("GEN_URL", "http://txn-generator:8091")
+
+
+def _get(base, path, timeout=8):
+    try:
+        with urllib.request.urlopen(f"{base}{path}", timeout=timeout) as r:
+            return json.loads(r.read().decode()), None
+    except Exception as e:
+        return None, str(e)
+
+
 app = Flask(__name__, static_folder="static")
 
 @app.get("/api/stats")
@@ -344,6 +362,34 @@ def _no_cache(resp):
     resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     resp.headers["Pragma"] = "no-cache"
     return resp
+
+@app.get("/api/comparison")
+def api_comparison():
+    top = request.args.get("top","500")
+    cmp_, e1 = _get(ALERT_URL, f"/comparison?top={top}")
+    scr, e2 = _get(SCREEN_URL, "/metrics")
+    gen, e3 = _get(GEN_URL, "/status")
+    return jsonify({"comparison": cmp_, "screening": scr, "generator": gen,
+                    "errors": [e for e in (e1,e2,e3) if e]})
+
+
+@app.get("/api/queue")
+def api_queue():
+    lim = request.args.get("limit","25")
+    sup = request.args.get("suppressed","0")
+    q, err = _get(ALERT_URL, f"/queue?limit={lim}&suppressed={sup}")
+    return jsonify(q or {"error": err, "incumbent": [], "ranked": []})
+
+
+@app.get("/api/suppressed")
+def api_suppressed():
+    q, err = _get(ALERT_URL, "/suppressed")
+    return jsonify(q if q is not None else {"error": err})
+
+
+@app.get("/compare")
+def compare(): return send_from_directory("static","compare.html")
+
 
 @app.get("/")
 def index(): return send_from_directory("static","index.html")

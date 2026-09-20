@@ -1,0 +1,209 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Screening augmentation · NVIDIA GB10</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e13; --panel:#111820; --panel2:#161f2a; --line:#22303f;
+  --txt:#e8eef5; --dim:#8ba0b6; --green:#76b900; --red:#ff4757; --amber:#ffa502;
+  --dell:#0076CE; --dell-soft:rgba(0,118,206,.14);
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+body{background:var(--bg);color:var(--txt);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;
+  min-height:100vh;display:flex;flex-direction:column}
+.brandrule{height:3px;background:linear-gradient(90deg,var(--dell) 0%,var(--dell) 48%,var(--green) 52%,var(--green) 100%);flex-shrink:0}
+header{display:flex;align-items:center;gap:20px;padding:14px 26px;background:var(--panel);
+  border-bottom:1px solid var(--line);flex-wrap:wrap}
+h1{font-size:21px;font-weight:650;letter-spacing:-.02em}
+h1 span{color:var(--green)}
+.spacer{flex:1}
+a.back{color:var(--dim);text-decoration:none;font:600 12px/1 var(--mono);letter-spacing:.08em;
+  border:1px solid var(--line);padding:8px 12px;border-radius:6px}
+a.back:hover{color:var(--txt);border-color:var(--dim)}
+.badge{font:600 11px/1 var(--mono);letter-spacing:.08em;padding:7px 11px;border-radius:6px;
+  background:rgba(118,185,0,.13);color:var(--green);border:1px solid rgba(118,185,0,.35)}
+.badge.warn{background:rgba(255,165,2,.13);color:var(--amber);border-color:rgba(255,165,2,.4)}
+.badge.dell{background:var(--dell-soft);color:#4aa8e8;border-color:rgba(0,118,206,.4)}
+
+/* honesty strip - always visible, never collapsed */
+.honesty{display:flex;gap:26px;flex-wrap:wrap;align-items:center;padding:11px 26px;
+  background:rgba(255,165,2,.07);border-bottom:1px solid rgba(255,165,2,.25);font-size:13px}
+.honesty b{color:var(--amber);font-variant-numeric:tabular-nums}
+.honesty .k{color:var(--dim);text-transform:uppercase;letter-spacing:.07em;font:600 10px/1 var(--mono)}
+
+main{flex:1;padding:20px 26px 32px;display:flex;flex-direction:column;gap:18px}
+.headline{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px 24px}
+.headline h2{font-size:14px;font-weight:600;color:var(--dim);text-transform:uppercase;
+  letter-spacing:.09em;margin-bottom:16px}
+.claim{font-size:23px;line-height:1.35;font-weight:500}
+.claim b{color:var(--green);font-variant-numeric:tabular-nums}
+.claim i{font-style:normal;color:var(--amber)}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:20px}
+.m{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:14px 16px}
+.m b{display:block;font:700 24px/1.1 var(--mono);color:var(--green);font-variant-numeric:tabular-nums}
+.m b.dim{color:var(--dim)}
+.m i{font-style:normal;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+.m small{display:block;margin-top:5px;font-size:11px;color:var(--dim)}
+
+.depth{display:flex;gap:8px;align-items:center;margin-top:16px;flex-wrap:wrap}
+.depth span{font:600 10px/1 var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.07em}
+.depth button{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+  font:600 12px/1 var(--mono);padding:8px 13px;border-radius:6px;cursor:pointer}
+.depth button:hover{border-color:var(--dim)}
+.depth button.on{background:rgba(118,185,0,.15);border-color:var(--green);color:var(--green)}
+
+.queues{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:1100px){.queues{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.panel>h3{font-size:13px;font-weight:600;padding:14px 18px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px}
+.panel>h3 em{font-style:normal;font-size:11px;color:var(--dim);font-weight:400}
+.panel.inc>h3{background:rgba(255,71,87,.06)}
+.panel.rank>h3{background:rgba(118,185,0,.06)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font:600 10px/1 var(--mono);color:var(--dim);text-transform:uppercase;
+  letter-spacing:.07em;padding:9px 12px;border-bottom:1px solid var(--line)}
+td{padding:9px 12px;border-bottom:1px solid rgba(34,48,63,.5);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+.sc{font:700 12px/1 var(--mono)}
+.sc.hi{color:var(--red)}.sc.md{color:var(--amber)}.sc.lo{color:var(--dim)}
+.tp{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--red);margin-right:7px}
+.tp.no{background:var(--line)}
+.rule{color:var(--dim);font-size:11px}
+.note{font-size:12px;color:var(--dim);padding:12px 18px;border-top:1px solid var(--line);line-height:1.5}
+.caveat{background:var(--panel);border:1px solid rgba(255,165,2,.3);border-radius:10px;
+  padding:16px 18px;font-size:13px;color:var(--dim);line-height:1.6}
+.caveat b{color:var(--amber)}
+.err{color:var(--red);font:600 12px/1 var(--mono);padding:10px 26px}
+</style></head><body>
+<div class="brandrule"></div>
+<header>
+  <h1>Screening <span>augmentation</span></h1>
+  <span class="badge dell">INCUMBENT PRESERVED</span>
+  <span class="spacer"></span>
+  <span id="mode" class="badge warn">mode …</span>
+  <a class="back" href="/">&larr; LIVE DETECTION</a>
+</header>
+
+<!-- Always visible. The numbers below mean nothing without these. -->
+<div class="honesty">
+  <span><span class="k">Fraud-rate mode</span> <b id="h-mode">–</b></span>
+  <span><span class="k">Stream fraud rate</span> <b id="h-rate">–</b></span>
+  <span><span class="k">True base rate</span> <b>0.122%</b></span>
+  <span><span class="k">Test set composition</span> <b id="h-set">–</b></span>
+  <span><span class="k">Incumbent FP rate</span> <b id="h-fp">–</b></span>
+</div>
+
+<div id="err" class="err" hidden></div>
+
+<main>
+  <section class="headline">
+    <h2>Same investigator effort, both orderings</h2>
+    <p class="claim" id="claim">Loading…</p>
+    <div class="depth">
+      <span>Queue depth worked</span>
+      <button data-top="50">50</button>
+      <button data-top="200">200</button>
+      <button data-top="500" class="on">500</button>
+      <button data-top="1000">1000</button>
+    </div>
+    <div class="metrics">
+      <div class="m"><b id="m-inc" class="dim">–</b><i>Incumbent top-N</i><small>true frauds found</small></div>
+      <div class="m"><b id="m-rank">–</b><i>Re-ranked top-N</i><small>true frauds found</small></div>
+      <div class="m"><b id="m-lift">–</b><i>Lift</i><small>same effort</small></div>
+      <div class="m"><b id="m-queue" class="dim">–</b><i>Incumbent queue</i><small>alerts raised</small></div>
+      <div class="m"><b id="m-red">–</b><i>Not worked</i><small>of the incumbent queue</small></div>
+      <div class="m"><b id="m-sup" class="dim">–</b><i>Deprioritised</i><small>with a recorded reason</small></div>
+    </div>
+  </section>
+
+  <section class="queues">
+    <div class="panel inc">
+      <h3>Incumbent screening queue <em>— its own order, nothing removed</em></h3>
+      <table><thead><tr><th>#</th><th>Alert</th><th>Rule</th><th>Amount</th><th>City</th><th>Score</th></tr></thead>
+      <tbody id="t-inc"></tbody></table>
+      <p class="note">The existing engine keeps screening. This platform does not perform
+      sanctions or AML screening and does not replace it — every alert it raises is preserved.</p>
+    </div>
+    <div class="panel rank">
+      <h3>Model re-ranked queue <em>— same alerts, reordered</em></h3>
+      <table><thead><tr><th>#</th><th>Alert</th><th>Rule</th><th>Amount</th><th>City</th><th>Score</th></tr></thead>
+      <tbody id="t-rank"></tbody></table>
+      <p class="note">Ranked by model score. The incumbent's rule and reason stay attached to every
+      alert, and its original position is recoverable.</p>
+    </div>
+  </section>
+
+  <section class="caveat" id="caveat"></section>
+</main>
+
+<script>
+var TOP = 500;
+function fmt(n){ return (n===null||n===undefined) ? '–' : Number(n).toLocaleString(); }
+function scls(s){ return s>=0.5 ? 'hi' : (s>=0.1 ? 'md' : 'lo'); }
+
+function rows(tb, list){
+  tb.innerHTML = '';
+  list.slice(0,14).forEach(function(r,i){
+    var tr = document.createElement('tr');
+    var dot = '<span class="tp'+(r.score>=0.5?'':' no')+'"></span>';
+    tr.innerHTML = '<td class="rule">'+(i+1)+'</td>'+
+      '<td>'+dot+(r.alert_id||'')+'</td>'+
+      '<td class="rule">'+(r.rule_id||'')+' · '+(r.rule_reason||'')+'</td>'+
+      '<td>$'+Number(r.amount||0).toFixed(2)+'</td>'+
+      '<td>'+(r.city||'')+'</td>'+
+      '<td class="sc '+scls(r.score)+'">'+Number(r.score||0).toFixed(4)+'</td>';
+    tb.appendChild(tr);
+  });
+}
+
+function load(){
+  fetch('/api/comparison?top='+TOP).then(function(r){return r.json()}).then(function(d){
+    var e = document.getElementById('err');
+    if(d.errors && d.errors.length){ e.hidden=false; e.textContent='pipeline: '+d.errors.join(' | '); }
+    else { e.hidden=true; }
+    var c = d.comparison, g = d.generator, s = d.screening;
+    if(g){
+      document.getElementById('mode').textContent = 'MODE: '+String(g.mode).toUpperCase();
+      document.getElementById('h-mode').textContent = g.mode;
+      document.getElementById('h-rate').textContent = (g.emitted_fraud_rate*100).toFixed(3)+'%';
+      document.getElementById('h-set').textContent = (g.test_set_rate*100).toFixed(2)+'% fraud (rebalanced)';
+      var badge = document.getElementById('mode');
+      badge.className = 'badge' + (g.mode==='demo' ? ' warn' : '');
+    }
+    if(s) document.getElementById('h-fp').textContent = (s.false_positive_rate*100).toFixed(2)+'%';
+    if(!c) return;
+    document.getElementById('m-inc').textContent  = fmt(c.true_positives_in_top_n_incumbent);
+    document.getElementById('m-rank').textContent = fmt(c.true_positives_in_top_n_ranked);
+    document.getElementById('m-lift').textContent = (typeof c.lift === 'number') ? c.lift+'×' : 'n/a';
+    document.getElementById('m-queue').textContent = fmt(c.incumbent_queue_size);
+    document.getElementById('m-red').textContent  = (c.queue_reduction*100).toFixed(1)+'%';
+    document.getElementById('m-sup').textContent  = fmt(c.suppressed);
+    document.getElementById('claim').innerHTML =
+      'Working the top <b>'+fmt(c.top_n)+'</b> alerts, the re-ranked queue surfaces '+
+      '<b>'+fmt(c.true_positives_in_top_n_ranked)+'</b> of the '+
+      '<b>'+fmt(c.true_positives_in_queue)+'</b> real frauds in the incumbent’s queue '+
+      '(<b>'+(c.recall_at_top_n_ranked*100).toFixed(1)+'%</b>). '+
+      'The same '+fmt(c.top_n)+' alerts in the incumbent’s own order surface '+
+      '<i>'+fmt(c.true_positives_in_top_n_incumbent)+'</i> '+
+      '(<i>'+(c.recall_at_top_n_incumbent*100).toFixed(1)+'%</i>).';
+    document.getElementById('caveat').innerHTML = '<b>Read this with the numbers.</b> '+c.caveat;
+  }).catch(function(x){
+    var e=document.getElementById('err'); e.hidden=false; e.textContent='load failed: '+x;
+  });
+
+  fetch('/api/queue?limit=25').then(function(r){return r.json()}).then(function(q){
+    rows(document.getElementById('t-inc'),  q.incumbent||[]);
+    rows(document.getElementById('t-rank'), q.ranked||[]);
+  }).catch(function(){});
+}
+
+document.querySelectorAll('.depth button').forEach(function(b){
+  b.addEventListener('click', function(){
+    document.querySelectorAll('.depth button').forEach(function(x){x.classList.remove('on')});
+    b.classList.add('on'); TOP = parseInt(b.dataset.top,10); load();
+  });
+});
+load(); setInterval(load, 4000);
+</script>
+</body></html>

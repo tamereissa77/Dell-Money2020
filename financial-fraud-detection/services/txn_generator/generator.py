@@ -7,7 +7,7 @@ Compose reinforces this: the label CSV is mounted into this service only.
 Control API on :8091 lets the presenter steer the stream without touching a
 terminal - rate, fraud-rate mode, scenario injection, pause/resume.
 """
-import os, sys, json, time, threading, random
+import os, sys, json, time, threading, random, itertools
 import numpy as np, pandas as pd
 from flask import Flask, jsonify, request
 
@@ -71,6 +71,9 @@ print(f"[gen] temporal order over {len(ORDER)} rows "
       f"({len(FRAUD_ROWS)} fraud / {len(CLEAN_ROWS)} clean)", flush=True)
 
 
+_SEQ = itertools.count(1)
+
+
 def row_payload(i, scenario=None):
     """The transaction as it goes on the wire. Carries no label, by design.
 
@@ -82,7 +85,10 @@ def row_payload(i, scenario=None):
     mcc = int(d["MCC"]) if not pd.isna(d["MCC"]) else 0
     err = str(d["Errors"]).strip()
     return {
-        "txn_id": f"t{int(i):07d}",
+        # Unique per emission, not per row. A replayed row is a NEW transaction
+        # event; deriving the id from the row index made repeats collide and
+        # silently overwrite each other downstream.
+        "txn_id": f"t{next(_SEQ):09d}",
         "row": int(i),
         "produced_ms": P.now_ms(),
         "amount": float(d["Amount"]),

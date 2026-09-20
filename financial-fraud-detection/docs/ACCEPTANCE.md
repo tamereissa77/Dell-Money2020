@@ -11,8 +11,8 @@ are recorded as not-yet-tested so nothing reads as passing that has not run.
 | 4 | ≥ 5,000 TPS end-to-end, stable queue, 10 min | 1 | **PASS** — 600 s soak at 6,911/6,912 TPS, break-even |
 | 5 | Batch throughput within 10 % of 589 k/s | 1 | **PASS** — 575,775/s, within 2.3 % |
 | 6 | Single-txn explanation ≤ 3.5 s, per-decision | 1 | **PASS warm / FAIL cold** (details below) |
-| 7 | Five scenarios inject on demand | 2 | 1 of 5 implemented |
-| 8 | `mule-fanin-fanout` caught by model, missed by stub | 2 | not started |
+| 7 | Five scenarios inject on demand | 2 | **1 of 5** — mechanism done, 4 typologies outstanding |
+| 8 | `mule-fanin-fanout` caught by model, missed by stub | 2 | **not started** — needs the typology from #7 |
 | 9 | No case closes without a named human action | 3 | not started |
 | 10 | Evidence pack exports; tamper fails verification | 3 | not started |
 | 11 | Cited draft in Arabic and English | 4 | not started |
@@ -84,6 +84,39 @@ A third artifact worth knowing: `TOTAL-LAG` includes up to
 `auto.commit.interval.ms` (default 5 s) of already-processed messages, which at
 5,000 TPS is ~25,000. Apparent lag below roughly that figure is bookkeeping,
 not backlog.
+
+## Stage 2 — screening comparison (the commercial claim)
+
+Measured at the **true 0.122% base rate** (`realistic` mode), 2,000 TPS.
+
+```
+incumbent queue : 80,638 alerts containing 197 real frauds
+incumbent FP    : 99.18%   (TP 1,667 / FP 126,095 over the session)
+```
+
+| Queue depth worked | Incumbent order | Re-ranked | Lift |
+|---|---|---|---|
+| 50 | 9 TP (5.1%) | 38 TP (21.7%) | 4.2x |
+| 200 | 9 TP (5.1%) | 134 TP (76.6%) | 14.9x |
+| **500** | **15 TP (8.6%)** | **177 TP (89.8%)** | **11.8x** |
+| 1000 | 21 TP (11.9%) | 169 TP (96.0%) | 8.1x |
+
+**The headline: working 500 alerts instead of 80,638, the re-ranked queue finds
+~90% of the fraud against the incumbent's ~9%.** Computed against ground truth,
+not against the model's own predictions, and not asserted.
+
+**The lift depends entirely on the stream's fraud rate**, so the mode must be
+quoted with the number. In `demo` mode (4% fraud, 33x reality) the incumbent's
+queue is artificially fraud-rich, its FP rate falls to ~66%, and lift drops to
+~1.9x. The UI shows the active mode, the stream's measured fraud rate, the true
+base rate and the test-set composition in a strip that is always visible.
+
+Suppression is capped at **10%** of the queue and keyed on (rule, merchant) —
+a pattern an investigator would recognise — not on the rule alone. Every
+suppression carries a written reason and stays retrievable at
+`/api/suppressed`. An earlier version keyed on rule alone and suppressed 80% of
+the queue, which would have won the comparison by hiding alerts rather than by
+ranking them.
 
 ## 5 — batch throughput preserved
 

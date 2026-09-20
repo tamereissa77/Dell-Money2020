@@ -55,6 +55,9 @@ services:
       HERO_N: "${HERO_N:-12}"
       BROKER: "redpanda:9092"
       FEED_SOURCE: "${FEED_SOURCE:-file}"
+      ALERT_URL: "http://alert-svc:8094"
+      SCREEN_URL: "http://screening-stub:8093"
+      GEN_URL: "http://txn-generator:8091"
       CUDA_CACHE_PATH: /nvcache
     healthcheck:
       test: ["CMD","bash","-c","exec 3<>/dev/tcp/localhost/8090 && echo -e 'GET /api/stats HTTP/1.0\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q 200"]
@@ -188,5 +191,62 @@ services:
       retries: 30
       start_period: 20s
 
+  # --- stage 2: the incumbent, and the re-ranking that augments it ----------
+  # screening-stub consumes txn.raw directly. It never sees a model score and
+  # nothing upstream can disable it: the model does not write to
+  # screening.alerts, and alert-svc only reorders what this service raises.
+  screening-stub:
+    build: ./docker/svc
+    image: ffd-svc:latest
+    container_name: ffd-screening-stub
+    restart: unless-stopped
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    command: ["/svc/screening_stub/screening.py"]
+    ports:
+      - "${SCREEN_PORT:-8093}:8093"
+    volumes:
+      - ./services:/svc:ro
+    environment:
+      BROKER: "redpanda:9092"
+      PORT: "8093"
+      RULE_AMOUNT: "${RULE_AMOUNT:-500}"
+      RULE_VELOCITY_COUNT: "${RULE_VELOCITY_COUNT:-12}"
+      RULE_VELOCITY_WINDOW: "${RULE_VELOCITY_WINDOW:-30}"
+    healthcheck:
+      test: ["CMD","bash","-c","exec 3<>/dev/tcp/localhost/8093 && echo -e 'GET /health HTTP/1.0\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q 200"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+  alert-svc:
+    build: ./docker/svc
+    image: ffd-svc:latest
+    container_name: ffd-alert-svc
+    restart: unless-stopped
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    command: ["/svc/alert_svc/alerts.py"]
+    ports:
+      - "${ALERT_PORT:-8094}:8094"
+    volumes:
+      - ./services:/svc:ro
+      - alert-state:/state
+    environment:
+      BROKER: "redpanda:9092"
+      PORT: "8094"
+      ALERT_DB: /state/alerts.db
+      SUPPRESS_ENABLED: "${SUPPRESS_ENABLED:-1}"
+    healthcheck:
+      test: ["CMD","bash","-c","exec 3<>/dev/tcp/localhost/8094 && echo -e 'GET /health HTTP/1.0\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q 200"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
 volumes:
   redpanda-data:
+  alert-state:
