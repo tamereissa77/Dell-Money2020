@@ -40,8 +40,47 @@ help:
 
 # ---------- demo control ----------
 up:
-	$(COMPOSE) up -d --wait
+	@$(COMPOSE) up -d redpanda-init >/dev/null 2>&1 || true
+	$(COMPOSE) up -d --wait $(V2_SERVICES)
 	@$(MAKE) --no-print-directory open
+
+# --- v1 / v2 variants ------------------------------------------------------
+# v1 is the original booth demo: Triton plus the UI reading the pre-scored
+# file. Nothing else. On a shared GB10 that matters - v2 adds six containers
+# and a 20 GB language model, and a v1 audience should not be paying for them.
+#
+# V1_SERVICES is the whole v1 surface; everything else is torn down rather than
+# left idle, because "stopped but present" still holds GPU on this box.
+# `compose up --wait` treats a one-shot that exits 0 as a failure, so
+# redpanda-init (which creates the topics and is *meant* to exit) has to be
+# excluded from any --wait or the whole start reports an error while actually
+# having succeeded. Listing the long-running services is the fix.
+V1_SERVICES := triton demo
+V2_SERVICES := redpanda triton demo txn-generator scoring-svc screening-stub \
+               alert-svc audit-svc copilot-svc copilot-llm
+V2_ONLY     := redpanda txn-generator scoring-svc screening-stub alert-svc \
+               audit-svc copilot-svc copilot-llm
+
+up-v1:
+	@echo "  v1 booth demo: Triton + UI on the pre-scored file"
+	@$(COMPOSE) rm -sf $(V2_ONLY) >/dev/null 2>&1 || true
+	@FEED_SOURCE=file $(COMPOSE) up -d --wait $(V1_SERVICES)
+	@$(MAKE) --no-print-directory open
+
+up-v2:
+	@echo "  v2 enterprise pipeline: streaming, screening, cases, audit, copilot"
+	@FEED_SOURCE=kafka $(COMPOSE) up -d redpanda-init >/dev/null 2>&1 || true
+	@FEED_SOURCE=kafka $(COMPOSE) up -d --wait $(V2_SERVICES)
+	@$(MAKE) --no-print-directory open
+
+which:
+	@running=$$(docker compose ps --services --status running 2>/dev/null | tr '\n' ' '); \
+	  case "$$running" in \
+	    *redpanda*) echo "  variant: v2 (full pipeline)";; \
+	    *demo*)     echo "  variant: v1 (booth demo)";; \
+	    *)          echo "  variant: not running";; \
+	  esac
+	@$(MAKE) --no-print-directory mode 2>/dev/null | head -1
 
 down:
 	$(COMPOSE) down
@@ -167,7 +206,7 @@ offline-load:
 # needs a recreate, not a restart - and a plain `docker compose up -d demo`
 # silently reverts to the .env default. These two targets make the mode an
 # explicit choice instead of something you have to remember.
-.PHONY: stream classic mode
+.PHONY: stream classic mode up-v1 up-v2 which
 
 stream:
 	@FEED_SOURCE=kafka $(COMPOSE) up -d demo

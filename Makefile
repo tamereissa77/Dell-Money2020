@@ -94,21 +94,43 @@ stop:
 	      [ "$$left" -eq 0 ] && break; printf "."; sleep 1; done; echo " done"; fi; done
 	@echo "all demos stopped."
 
+# Stop every demo except KEEP. One demo at a time - they share the GB10.
+# Extracted from DEMO_RULES so the v1/v2 variants below reuse the exact same
+# teardown rather than a second copy that can drift out of step with it.
+.PHONY: _stop_others fraud-v1 fraud-v2 fraud-which
+_stop_others:
+	@for d in $(DEMOS); do \
+	  if [ "$$d" != "$(KEEP)" ]; then \
+	    pj=$$(cat $$d/.project 2>/dev/null || echo $$d); \
+	    n=$$(docker ps -q --filter "label=com.docker.compose.project=$$pj" | wc -l); \
+	    if [ "$$n" -gt 0 ]; then \
+	      printf "  stopping %s gracefully (shared GB10) " "$$d"; \
+	      $(MAKE) --no-print-directory -C $$d down >/dev/null 2>&1 || true; \
+	      for i in $$(seq 1 90); do \
+	        left=$$(docker ps -q --filter "label=com.docker.compose.project=$$pj" | wc -l); \
+	        [ "$$left" -eq 0 ] && break; printf "."; sleep 1; done; \
+	      echo " done"; fi; fi; done
+	@$(MAKE) --no-print-directory _gpu_free
+
+# The fraud demo ships two variants. v1 is the original booth demo - Triton and
+# the UI on the pre-scored file. v2 adds streaming, screening comparison, cases,
+# the audit trail and a 20 GB language model. `make fraud` runs v2; use
+# `make fraud-v1` when the audience only needs the original three minutes.
+fraud-v1:
+	@$(MAKE) --no-print-directory _stop_others KEEP=financial-fraud-detection
+	@$(MAKE) --no-print-directory -C financial-fraud-detection up-v1
+
+fraud-v2:
+	@$(MAKE) --no-print-directory _stop_others KEEP=financial-fraud-detection
+	@$(MAKE) --no-print-directory -C financial-fraud-detection up-v2
+
+fraud-which:
+	@$(MAKE) --no-print-directory -C financial-fraud-detection which
+
 # --- generate per-demo targets for both the directory name and its alias ---
 define DEMO_RULES
 $(1):
-	@for d in $$(DEMOS); do \
-	  if [ "$$$$d" != "$(2)" ]; then \
-	    pj=$$$$(cat $$$$d/.project 2>/dev/null || echo $$$$d); \
-	    n=$$$$(docker ps -q --filter "label=com.docker.compose.project=$$$$pj" | wc -l); \
-	    if [ "$$$$n" -gt 0 ]; then \
-	      printf "  stopping %s gracefully (shared GB10) " "$$$$d"; \
-	      $$(MAKE) --no-print-directory -C $$$$d down >/dev/null 2>&1 || true; \
-	      for i in $$$$(seq 1 90); do \
-	        left=$$$$(docker ps -q --filter "label=com.docker.compose.project=$$$$pj" | wc -l); \
-	        [ "$$$$left" -eq 0 ] && break; printf "."; sleep 1; done; \
-	      echo " done"; fi; fi; done
-	@$$(MAKE) --no-print-directory _gpu_free
+	@$$(MAKE) --no-print-directory _stop_others KEEP=$(2)
 	@echo "starting $(2) ..."
 	@$$(MAKE) --no-print-directory -C $(2) up
 
