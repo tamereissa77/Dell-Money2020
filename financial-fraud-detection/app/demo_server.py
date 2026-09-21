@@ -206,6 +206,11 @@ def row(i):
 # 5,000 TPS an unbounded buffer is a memory leak with a countdown, and the UI
 # only ever renders the tail.
 STREAM, STREAM_LOCK = [], threading.Lock()
+# Injected scenarios are retained separately from the scrolling feed. At 400 TPS
+# a one-transaction injection leaves a 200-row window in about half a second -
+# too fast for a presenter to point at, let alone narrate. These persist until
+# displaced by later injections.
+SCENARIO_HITS, SCENARIO_MAX = [], 120
 STREAM_MAX = int(os.environ.get("STREAM_MAX", "2000"))
 STREAM_STATE = {"consumed": 0, "connected": False, "last_error": None,
                 "e2e_ms": 0.0, "model_ms": 0.0, "last_ms": 0.0}
@@ -233,6 +238,10 @@ def _stream_consumer():
                     STREAM.append(rec)
                     if len(STREAM) > STREAM_MAX:
                         del STREAM[:len(STREAM) - STREAM_MAX]
+                    if rec.get("scenario"):
+                        SCENARIO_HITS.append(rec)
+                        if len(SCENARIO_HITS) > SCENARIO_MAX:
+                            del SCENARIO_HITS[:len(SCENARIO_HITS) - SCENARIO_MAX]
                 STREAM_STATE["consumed"] += 1
                 STREAM_STATE["e2e_ms"] = rec.get("e2e_latency_ms", 0.0)
                 STREAM_STATE["model_ms"] = rec.get("model_latency_ms", 0.0)
@@ -385,6 +394,35 @@ def api_queue():
 def api_suppressed():
     q, err = _get(ALERT_URL, "/suppressed")
     return jsonify(q if q is not None else {"error": err})
+
+
+@app.get("/api/scenarios")
+def api_scenarios():
+    """Injected transactions, retained so a presenter can point at them.
+
+    `since_ms` filters to a recent window; omit it for everything retained.
+    Grouped by scenario with the detection outcome, which is what the presenter
+    is actually narrating.
+    """
+    since = float(request.args.get("since_ms", 0) or 0)
+    with STREAM_LOCK:
+        hits = [h for h in SCENARIO_HITS if h.get("scored_ms", 0) >= since]
+    out = {}
+    for h in hits:
+        g = out.setdefault(h["scenario"], {"scenario": h["scenario"], "rows": [],
+                                           "flagged": 0, "count": 0, "top_score": 0.0})
+        i = int(h["row"])
+        r = row(i)
+        r.update({"score": round(float(h["score"]), 4), "pred": int(h["pred"]),
+                  "txn_id": h.get("txn_id"), "scored_ms": h.get("scored_ms")})
+        g["rows"].append(r)
+        g["count"] += 1
+        g["flagged"] += int(h["pred"])
+        g["top_score"] = max(g["top_score"], round(float(h["score"]), 4))
+    for g in out.values():
+        g["rows"] = g["rows"][-12:]
+    return jsonify(sorted(out.values(),
+                          key=lambda g: -max((r.get("scored_ms") or 0) for r in g["rows"])))
 
 
 @app.get("/compare")

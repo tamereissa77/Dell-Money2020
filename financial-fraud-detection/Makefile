@@ -119,6 +119,34 @@ train: tools
 	  nvcr.io/nvidia/cugraph/financial-fraud-training:2.0.0
 	@bash scripts/install_model.sh
 
+# --- v2 feed mode ----------------------------------------------------------
+# The UI reads either the pre-scored file (v1 behaviour, the default) or the
+# live txn.scored stream. It is a container env var fixed at create time, so it
+# needs a recreate, not a restart - and a plain `docker compose up -d demo`
+# silently reverts to the .env default. These two targets make the mode an
+# explicit choice instead of something you have to remember.
+.PHONY: stream classic mode
+
+stream:
+	@FEED_SOURCE=kafka $(COMPOSE) up -d demo
+	@printf "  waiting for the UI "; for i in $$(seq 1 40); do \
+	  [ "$$(docker inspect ffd-demo --format '{{.State.Health.Status}}' 2>/dev/null)" = "healthy" ] && break; \
+	  printf "."; sleep 3; done; echo ""
+	@echo "  feed: LIVE STREAM (txn.scored)"
+
+classic:
+	@FEED_SOURCE=file $(COMPOSE) up -d demo
+	@printf "  waiting for the UI "; for i in $$(seq 1 40); do \
+	  [ "$$(docker inspect ffd-demo --format '{{.State.Health.Status}}' 2>/dev/null)" = "healthy" ] && break; \
+	  printf "."; sleep 3; done; echo ""
+	@echo "  feed: PRE-SCORED FILE (v1 booth demo)"
+
+mode:
+	@docker inspect ffd-demo --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null \
+	  | grep -E "^FEED_SOURCE=" | sed 's|^|  |' || echo "  demo not running"
+	@curl -s --max-time 5 http://localhost:$${DEMO_PORT:-8090}/api/stream 2>/dev/null \
+	  | python3 -m json.tool 2>/dev/null | sed 's|^|  |' || true
+
 pipeline: data preprocess train up
 
 clean:

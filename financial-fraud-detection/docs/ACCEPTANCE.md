@@ -11,8 +11,8 @@ are recorded as not-yet-tested so nothing reads as passing that has not run.
 | 4 | ≥ 5,000 TPS end-to-end, stable queue, 10 min | 1 | **PASS** — 600 s soak at 6,911/6,912 TPS, break-even |
 | 5 | Batch throughput within 10 % of 589 k/s | 1 | **PASS** — 575,775/s, within 2.3 % |
 | 6 | Single-txn explanation ≤ 3.5 s, per-decision | 1 | **PASS warm / FAIL cold** (details below) |
-| 7 | Five scenarios inject on demand | 2 | **1 of 5** — mechanism done, 4 typologies outstanding |
-| 8 | `mule-fanin-fanout` caught by model, missed by stub | 2 | **not started** — needs the typology from #7 |
+| 7 | Five scenarios inject on demand | 2 | **PASS** — 5/5 visible in 0.30 s |
+| 8 | `mule-fanin-fanout` caught by model, missed by stub | 2 | **NOT SATISFIABLE on this split** — see below |
 | 9 | No case closes without a named human action | 3 | not started |
 | 10 | Evidence pack exports; tamper fails verification | 3 | not started |
 | 11 | Cited draft in Arabic and English | 4 | not started |
@@ -117,6 +117,60 @@ suppression carries a written reason and stays retrievable at
 `/api/suppressed`. An earlier version keyed on rule alone and suppressed 80% of
 the queue, which would have won the comparison by hiding alerts rather than by
 ranking them.
+
+## 7 — scenario injection
+
+All five typologies inject on demand and appear in the UI well inside the bar:
+
+| Scenario | Visible in | Rows | Flagged | Top score |
+|---|---|---|---|---|
+| `merchant-city-anomaly` | 0.30 s | 1/1 | 1 | 0.9262 |
+| `geo-velocity` | 0.31 s | 2/2 | 1 | 0.9763 |
+| `cnp-burst` | 0.30 s | 6/6 | 1 | 0.7336 |
+| `account-takeover` | 0.30 s | 5/5 | 3 | 0.9839 |
+| `mule-fanin-fanout` | 0.30 s | 8/8 | 8 | 0.9926 |
+
+Each typology is a curated sequence of **real rows** from the test set, never a
+fabricated transaction: `scoring-svc` looks up features by row index, so a
+synthetic row could not be scored at all.
+
+**A one-transaction injection is invisible in the scrolling feed.** At 400 TPS a
+single row leaves a 200-row window in about half a second — too fast for a
+presenter to point at. Injected transactions are therefore retained separately
+in `/api/scenarios` until displaced by later injections, which is what the
+timings above measure.
+
+**Operational caveat:** the first injection after restarting the demo container
+can be missed. Its consumer joins the group at `offset=latest`, and anything
+produced during that join window is never seen. Inject once and discard the
+result after any `make stream` / `make classic` switch.
+
+## 8 — model catches it, screening misses it
+
+**Not satisfiable on the blueprint's 2019 split, and the build says so rather
+than faking it.**
+
+Every fraud in that split is in Rome, so any watchlist containing Rome catches
+100% of them: **zero of the 22,787 rule-evading rows are fraudulent.** There is
+no transaction the model can catch that the incumbent misses, because the
+incumbent misses nothing.
+
+`mule-fanin-fanout` selects in tiers and reports which one it reached:
+
+- **tier 1** — frauds the incumbent's rules do not fire on. The full claim.
+- **tier 2** — frauds at a high fan-in merchant, rules may also fire. Shows the
+  network structure only.
+
+On this data it reaches **tier 2**: 8 frauds across 8 distinct cards converging
+on one merchant, all 8 flagged by the model (top score 0.9926). That is a
+genuine fan-in, and it is the right screen for explaining why a graph sees
+something a row-at-a-time engine cannot — but it does **not** demonstrate rules
+evasion, and `describe()` returns exactly that sentence so it cannot be quoted
+otherwise.
+
+Tier 1 becomes reachable on the `gnn_np_div` split (2015–16), where fraud spans
+730 cities. That is where criterion 8 should be demonstrated. See
+`LIMITATIONS.md`.
 
 ## 5 — batch throughput preserved
 
