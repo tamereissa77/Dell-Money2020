@@ -62,7 +62,9 @@ def db():
           raised_ms REAL, ranked_ms REAL,
           state TEXT DEFAULT 'new',
           model_version TEXT, feature_version TEXT, data_version TEXT,
-          label INTEGER
+          label INTEGER,
+          disposition TEXT, assigned_to TEXT, submitted_by TEXT,
+          approved_by TEXT, closed_ms REAL
         );
         CREATE INDEX IF NOT EXISTS ix_alerts_score ON alerts(score DESC);
         CREATE INDEX IF NOT EXISTS ix_alerts_state ON alerts(state);
@@ -77,8 +79,11 @@ def db():
         # Additive migration: CREATE TABLE IF NOT EXISTS will not add a column
         # to a database that already exists on the volume.
         cols = {r[1] for r in _conn.execute("PRAGMA table_info(alerts)")}
-        if "label" not in cols:
-            _conn.execute("ALTER TABLE alerts ADD COLUMN label INTEGER")
+        for col, typ in (("label","INTEGER"), ("disposition","TEXT"),
+                         ("assigned_to","TEXT"), ("submitted_by","TEXT"),
+                         ("approved_by","TEXT"), ("closed_ms","REAL")):
+            if col not in cols:
+                _conn.execute(f"ALTER TABLE alerts ADD COLUMN {col} {typ}")
         _conn.commit()
     return _conn
 
@@ -355,6 +360,159 @@ def comparison():
                   "this lift - depends on the fraud rate of the stream; check "
                   "the generator's mode before quoting either.",
     })
+
+
+# --- case lifecycle and the approval gate ----------------------------------
+# new -> assigned -> investigating -> pending-approval -> closed(...)
+#
+# The gate is enforced HERE, at the service layer, not in the UI. Every route
+# below refuses without a named actor, and closure additionally requires a
+# named approver who is not the person who submitted it. A UI control can be
+# bypassed with curl; this cannot.
+TRANSITIONS = {
+    "assign":      ("new",             "assigned"),
+    "investigate": ("assigned",        "investigating"),
+    "submit":      ("investigating",   "pending-approval"),
+}
+DISPOSITIONS = {"confirmed-fraud", "false-positive", "escalated"}
+
+
+def _audit(prod, action, actor, actor_kind, alert, payload, case_id=None):
+    """Every state change is published to case.events, which is the only thing
+    audit-svc consumes. Nothing reaches the audit log except through here."""
+    P.send(prod, P.T_CASES, case_id or alert["alert_id"], {
+        "ts": time.time(),
+        "actor": actor, "actor_kind": actor_kind, "action": action,
+        "case_id": case_id or alert["alert_id"],
+        "alert_id": alert["alert_id"], "txn_id": alert.get("txn_id"),
+        "model_version": alert.get("model_version"),
+        "feature_version": alert.get("feature_version"),
+        "data_version": alert.get("data_version"),
+        "payload": payload,
+    })
+    prod.flush(2)
+
+
+_case_prod = None
+
+
+def case_producer():
+    global _case_prod
+    if _case_prod is None:
+        _case_prod = P.producer("alert-svc-cases")
+    return _case_prod
+
+
+def _load(alert_id):
+    with _dblock:
+        r = db().execute(
+            "SELECT alert_id,txn_id,state,score,rule_id,rule_reason,amount,city,"
+            "model_version,feature_version,data_version,assigned_to,submitted_by "
+            "FROM alerts WHERE alert_id=?", (alert_id,)).fetchone()
+    if not r:
+        return None
+    return dict(zip(["alert_id","txn_id","state","score","rule_id","rule_reason",
+                     "amount","city","model_version","feature_version",
+                     "data_version","assigned_to","submitted_by"], r))
+
+
+def _actor():
+    """A named human, or nothing. No default, no service account, no fallback."""
+    body = request.get_json(silent=True) or {}
+    a = (body.get("actor") or "").strip()
+    return (a or None), body
+
+
+@app.post("/case/<alert_id>/<verb>")
+def case_transition(alert_id, verb):
+    if verb not in TRANSITIONS:
+        return jsonify({"error": "unknown transition", "known": sorted(TRANSITIONS)}), 404
+    actor, body = _actor()
+    if not actor:
+        return jsonify({"error": "a named actor is required",
+                        "detail": "every case action is attributed to a person"}), 400
+    alert = _load(alert_id)
+    if not alert:
+        return jsonify({"error": "no such alert", "alert_id": alert_id}), 404
+    want_from, to = TRANSITIONS[verb]
+    if alert["state"] != want_from:
+        return jsonify({"error": "invalid transition",
+                        "from": alert["state"], "attempted": verb,
+                        "requires": want_from}), 409
+    cols = {"state": to}
+    if verb == "assign":
+        cols["assigned_to"] = actor
+    if verb == "submit":
+        cols["submitted_by"] = actor
+    with _dblock:
+        db().execute(f"UPDATE alerts SET {','.join(k+'=?' for k in cols)} "
+                     f"WHERE alert_id=?", (*cols.values(), alert_id))
+        db().commit()
+    _audit(case_producer(), f"case.{verb}", actor, "human", alert,
+           {"from": alert["state"], "to": to, "note": body.get("note")})
+    return jsonify({"alert_id": alert_id, "state": to, "actor": actor})
+
+
+@app.post("/case/<alert_id>/close")
+def case_close(alert_id):
+    """The gate. Four conditions, all enforced here:
+
+      1. a named approver
+      2. the case is in pending-approval - it cannot skip the workflow
+      3. a valid disposition
+      4. the approver is not the person who submitted it (four eyes)
+
+    There is no flag, header or internal route that bypasses these.
+    """
+    actor, body = _actor()
+    if not actor:
+        return jsonify({"error": "a named approver is required",
+                        "detail": "no case closes without an attributed human decision"}), 400
+    alert = _load(alert_id)
+    if not alert:
+        return jsonify({"error": "no such alert", "alert_id": alert_id}), 404
+    if alert["state"] != "pending-approval":
+        return jsonify({"error": "case is not awaiting approval",
+                        "state": alert["state"],
+                        "detail": "a case must be investigated and submitted before it can close"}), 409
+    disp = (body.get("disposition") or "").strip()
+    if disp not in DISPOSITIONS:
+        return jsonify({"error": "invalid disposition", "allowed": sorted(DISPOSITIONS)}), 400
+    if alert.get("submitted_by") and actor == alert["submitted_by"]:
+        return jsonify({"error": "four-eyes violation",
+                        "detail": f"{actor} submitted this case and cannot also approve it"}), 403
+    with _dblock:
+        db().execute("UPDATE alerts SET state=?, disposition=?, approved_by=?, "
+                     "closed_ms=? WHERE alert_id=?",
+                     (f"closed", disp, actor, P.now_ms(), alert_id))
+        db().commit()
+    _audit(case_producer(), "case.close", actor, "human", alert,
+           {"from": "pending-approval", "to": "closed", "disposition": disp,
+            "submitted_by": alert.get("submitted_by"),
+            "approved_by": actor, "note": body.get("note")})
+    return jsonify({"alert_id": alert_id, "state": "closed", "disposition": disp,
+                    "approved_by": actor, "submitted_by": alert.get("submitted_by")})
+
+
+@app.get("/case/<alert_id>")
+def case_get(alert_id):
+    a = _load(alert_id)
+    return (jsonify(a), 200) if a else (jsonify({"error": "no such alert"}), 404)
+
+
+@app.get("/cases")
+def cases():
+    st = request.args.get("state")
+    lim = min(int(request.args.get("limit", 50)), 200)
+    with _dblock:
+        q = ("SELECT alert_id,txn_id,state,disposition,score,rule_id,amount,city,"
+             "assigned_to,submitted_by,approved_by FROM alerts ")
+        rows = (db().execute(q + "WHERE state=? ORDER BY score DESC LIMIT ?", (st, lim))
+                if st else
+                db().execute(q + "WHERE state!='new' ORDER BY score DESC LIMIT ?", (lim,))).fetchall()
+    cols = ["alert_id","txn_id","state","disposition","score","rule_id","amount",
+            "city","assigned_to","submitted_by","approved_by"]
+    return jsonify([dict(zip(cols, r)) for r in rows])
 
 
 @app.get("/suppressed")

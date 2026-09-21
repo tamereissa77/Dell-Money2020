@@ -13,8 +13,8 @@ are recorded as not-yet-tested so nothing reads as passing that has not run.
 | 6 | Single-txn explanation ≤ 3.5 s, per-decision | 1 | **PASS warm / FAIL cold** (details below) |
 | 7 | Five scenarios inject on demand | 2 | **PASS** — 5/5 visible in 0.30 s |
 | 8 | `mule-fanin-fanout` caught by model, missed by stub | 2 | **NOT SATISFIABLE on this split** — see below |
-| 9 | No case closes without a named human action | 3 | not started |
-| 10 | Evidence pack exports; tamper fails verification | 3 | not started |
+| 9 | No case closes without a named human action | 3 | **PASS** — 6 bypass attempts refused |
+| 10 | Evidence pack exports; tamper fails verification | 3 | **PASS** — tamper named to the record |
 | 11 | Cited draft in Arabic and English | 4 | not started |
 | 12 | Template fallback with the LLM stopped | 4 | not started |
 | 13 | Broker killed mid-demo: degraded banner, recovers | 5 | partial — `/api/stream` reports `degraded`; banner is Stage 5 |
@@ -171,6 +171,68 @@ otherwise.
 Tier 1 becomes reachable on the `gnn_np_div` split (2015–16), where fraud spans
 730 cities. That is where criterion 8 should be demonstrated. See
 `LIMITATIONS.md`.
+
+## 9 — the approval gate
+
+Enforced at the **service layer**, not in the UI. A UI control can be bypassed
+with curl; these cannot. Every attempt below was made directly against the API:
+
+| Attempt | Result |
+|---|---|
+| close with no actor | **400** a named approver is required |
+| close straight from `new`, skipping the workflow | **409** case is not awaiting approval |
+| assign with no actor | **400** a named actor is required |
+| close as the person who submitted it | **403** four-eyes violation |
+| close with an invalid disposition | **400** invalid disposition |
+| close as a second named approver | **200** closed / confirmed-fraud |
+
+The lifecycle is `new → assigned → investigating → pending-approval → closed`,
+and closure additionally requires a disposition from a fixed set and an
+approver who is **not** the submitter. There is no flag, header or internal
+route that bypasses any of it.
+
+## 10 — evidence pack and tamper detection
+
+Export for one case, `GET /export/<case_id>`:
+
+```
+case          : S000343909
+records       : 4
+human actors  : a.rahman, m.alqahtani
+chain         : ok=True over 4 records
+pack digest   : 74e0f5a3332ec1852e86af7178dfd952…
+
+  1  06:58:50Z  human  a.rahman      case.assign       new→assigned
+  2  06:58:50Z  human  a.rahman      case.investigate  assigned→investigating
+  3  06:58:50Z  human  a.rahman      case.submit       investigating→pending-approval
+  4  06:58:50Z  human  m.alqahtani   case.close        pending-approval→closed [confirmed-fraud]
+```
+
+**Tamper test.** One record was altered directly in SQLite — the disposition
+rewritten from `confirmed-fraud` to `false-positive`, without updating its hash:
+
+```
+broken_at      : 4
+reason         : record contents do not match its stored hash
+expected_hash  : ee7ce579bc816d54…
+found_hash     : 4d534d5716254bdf…
+```
+
+Verification fails loudly and **names the record**, which is the question that
+actually gets asked. The evidence pack carries the same failure, so a tampered
+database cannot produce a clean-looking export.
+
+**Append-only is structural.** Records reach the log only from the
+`case.events` topic; `audit-svc` has no write route at all:
+
+```
+POST/PUT/DELETE/PATCH /records → 405      POST /append|/audit|/write → 404
+```
+
+**Deliberately not audited:** one record per scored transaction. At the measured
+6,900 TPS that is ~600M records a day and none of them is a decision. The score
+that matters is the one attached to an alert, captured there with its model,
+feature and data versions.
 
 ## 5 — batch throughput preserved
 
