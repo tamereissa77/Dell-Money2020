@@ -6,7 +6,7 @@ are recorded as not-yet-tested so nothing reads as passing that has not run.
 | # | Criterion | Stage | Result |
 |---|---|---|---|
 | 1 | `v1-money2020` reproduces the original demo | 1 | **PASS** (see below) |
-| 2 | `offline-load && start` < 90 s, no internet | 5 | **not tested** — and see the note on the budget |
+| 2 | `offline-load && start` < 90 s, no internet | 5 | **FAIL as specified** — 693 s measured; see below |
 | 3 | Cable unplugged: every view works | 5 | not tested |
 | 4 | ≥ 5,000 TPS end-to-end, stable queue, 10 min | 1 | **PASS** — 600 s soak at 6,911/6,912 TPS, break-even |
 | 5 | Batch throughput within 10 % of 589 k/s | 1 | **PASS** — 575,775/s, within 2.3 % |
@@ -414,11 +414,48 @@ compared: 10   mismatches (>0.02): 0   max delta: 4.58e-07
 
 Float noise. The subgraph remapping is faithful.
 
-## Note on criterion 2 — the 90-second budget
+## Note on criterion 2 — the 90-second budget, now measured
 
-`ffd-triton` is 36.3 GB and `ffd-demo` is 25.5 GB. `docker load` of ~62 GB
-cannot complete in 90 s on any disk in this class, before a broker and services
-are added. Mitigated in part by building `ffd-svc` **FROM** `ffd-demo`, so the
-v2 services add a wheel rather than a second 25 GB base — but the budget still
-needs renegotiating: either time only `start` (excluding `docker load`), or
-raise the number. Flagged rather than silently failed.
+The budget was flagged as unreachable from the start. It has now been measured
+rather than estimated:
+
+| Step | Measured |
+|---|---|
+| `offline-save` | **2,526 s** (42 min) |
+| bundle size | **49 GB** — images 41 GB, model weights 7.7 GB, dataset 8.4 MB |
+| manifest verify (sha256 × 3) | 24 s |
+| `offline-load` | **693 s** (11.5 min) |
+| `start` alone | **13 s** (criterion 14) |
+| **brief's budget for load + start** | **90 s** |
+
+`offline-load` is **7.7× over budget on its own**, and it is bounded by reading
+and decompressing 41 GB of container images — not by anything in this build.
+The images are what they are: the NVIDIA training base is 24 GB before a line
+of demo code, Triton is 34 GB, and vLLM adds 14 GB.
+
+**Recommendation: split the criterion.**
+
+- `offline-load` is **provisioning** — done once, the day before, to a machine
+  that will then be carried to the venue. Budget it at **15 minutes** and
+  verify it by the sha256 manifest rather than a stopwatch.
+- `start` is what happens **in front of a customer**, and it already meets the
+  spirit of the 90 s bar with 77 s to spare: **13 s** to a usable demo, 43 s
+  including the 9B language model.
+
+Nothing here is a shortcut: the bundle genuinely contains everything needed on
+a machine with no internet, including the model weights that `docker save`
+would otherwise have missed entirely (see the packaging bug in the Stage 5
+commit).
+
+### `offline-load` is idempotent
+
+The first run failed at the final step: the preprocessing writes
+`data/TabFormer/gnn_np` from a container as root, so `tar` could not overwrite
+it and aborted the whole target after successfully loading 41 GB of images.
+It now skips an existing dataset and takes `FORCE=1` to replace it.
+
+## 3 — cable unplugged
+
+**Not yet tested.** The bundle exists and loads; what has not been done is
+pulling the network and exercising every view. Worth doing on the booth
+machine rather than this one, since this one is the source of the bundle.

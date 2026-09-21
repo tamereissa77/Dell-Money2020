@@ -197,7 +197,17 @@ offline-load:
 	@docker volume create financial-fraud-detection_nemotron-hf >/dev/null
 	@docker run --rm -v financial-fraud-detection_nemotron-hf:/dest -v $(CURDIR)/$(OFFLINE):/in \
 	  alpine tar xzf /in/nemotron-hf.tar.gz -C /dest
-	@tar xzf $(OFFLINE)/tabformer-gnn.tar.gz
+	@# The preprocessing runs in a container as root, so an existing data dir is
+	@# root-owned and tar cannot overwrite it - which aborted the whole target on
+	@# a machine that already had the data. Skip unless asked to replace.
+	@if [ -d data/TabFormer/gnn_np ] && [ -z "$(FORCE)" ]; then \
+	  echo "  dataset already present - skipping (FORCE=1 to replace)"; \
+	 else \
+	  echo "  restoring dataset"; \
+	  sudo -n rm -rf data/TabFormer/gnn_np 2>/dev/null || rm -rf data/TabFormer/gnn_np 2>/dev/null || true; \
+	  tar xzf $(OFFLINE)/tabformer-gnn.tar.gz || { \
+	    echo "  ERROR: could not replace data/TabFormer/gnn_np (root-owned?)" >&2; exit 1; }; \
+	 fi
 	@echo "loaded. now run: make up && make prewarm"
 
 # --- v2 feed mode ----------------------------------------------------------
