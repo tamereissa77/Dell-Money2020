@@ -16,7 +16,7 @@ are recorded as not-yet-tested so nothing reads as passing that has not run.
 | 9 | No case closes without a named human action | 3 | **PASS** — 6 bypass attempts refused |
 | 10 | Evidence pack exports; tamper fails verification | 3 | **PASS** — tamper named to the record |
 | 11 | Cited draft in Arabic and English | 4 | **PASS** — 8/8 citations resolve |
-| 12 | Template fallback with the LLM stopped | 4 | **PARTIAL** — template path proven, no LLM to fail over from |
+| 12 | Template fallback with the LLM stopped | 4 | **PASS** — failover in 0.0 s, recovers automatically |
 | 13 | Broker killed mid-demo: degraded banner, recovers | 5 | partial — `/api/stream` reports `degraded`; banner is Stage 5 |
 | 14 | Full power-cycle recovery ≤ 30 s | 5 | not tested |
 | 15 | `docker manifest inspect` confirms arm64 for all images | 5 | **partial PASS** — all four current images verified arm64 |
@@ -269,16 +269,57 @@ Shapley attribution.
   training data (POL-MODEL-02) — which is precisely the "merchant city"
   problem in `LIMITATIONS.md`, surfaced into the workflow rather than hidden.
 
-## 12 — fallback with no LLM
+## 12 — fallback with the LLM stopped
 
-**Partial, and worth stating precisely.** The deterministic template narrator
-works and is the only generator wired: `LLM_URL` is empty, `llm_available` is
-false, and the drafts above were produced with no model in the path at all.
+The copilot runs **NVIDIA-Nemotron-Nano-9B-v2-FP8** on vLLM as a service of
+this compose project — the same container VSS uses, but owned here, reusing
+VSS's model-cache volume so it starts warm rather than pulling 9B again. The
+launcher's one-demo-at-a-time rule therefore never stops it, and the fraud demo
+stays self-contained. It costs **20.2 GB** of GPU at `--gpu-memory-utilization
+0.18`, alongside Triton's ~600 MB.
 
-What has **not** been demonstrated is a *failover* — stopping a running LLM and
-watching the template take over — because there is no LLM path yet. The
-criterion is met in substance (the demo cannot be broken by a missing model)
-but the specific test it describes cannot run until one exists.
+| Step | Result |
+|---|---|
+| draft with the LLM up | `generator: llm`, 10.7 s, cited [1,2,3,4,6] |
+| `docker compose stop copilot-llm` | — |
+| draft with the LLM down | `generator: template`, **0.0 s**, 220 words, 8 citations, Arabic intact |
+| LLM restarted | `generator: llm` — recovers with no intervention |
+
+Failover is immediate and silent to the user; the reason is recorded
+(`llm unreachable: URLError`) and counted.
+
+### The LLM output is verified, not trusted
+
+Three checks before a generated narrative is accepted, any of which falls back
+to the template:
+
+1. **Every `[n]` must exist** in the citation set. A hallucinated reference is a
+   hard reject, not a footnote.
+2. It must cite **something**.
+3. It must pass the same forbidden-phrase guard as the template.
+
+A grounded narrative that cannot be verified is worth less than a plain one
+that can.
+
+### Three real defects this surfaced
+
+**"SAR" is the Saudi Riyal.** The first guard listed a bare `" sar "` and
+rejected a perfectly good narrative for quoting POL-AML-01's "SAR 1,875"
+threshold. At a Riyadh event every amount is in SAR, so this would have fired
+constantly. The guard now matches the *filing sense* only — `file a SAR`,
+`SAR filing`, `raise an STR`, `suspicious transaction report` — and passes
+currency usage in either position. Seven cases verified.
+
+**Nemotron is a reasoning model.** Without a `/no_think` system prompt it spent
+the entire token budget thinking and never emitted the narrative
+(`finish_reason: length`, zero citations).
+
+**The model read the score backwards.** Given 0.9955 it wrote "strong
+likelihood of the transaction being legitimate". The prompt now states
+explicitly that the score is P(fraud), where 1.0 means almost certainly fraud.
+This is the clearest possible argument for the adoption gate: a fluent,
+well-cited narrative can still be exactly wrong, and no draft reaches a case
+file without a named analyst adopting it.
 
 ## 5 — batch throughput preserved
 

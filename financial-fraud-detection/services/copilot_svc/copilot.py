@@ -35,8 +35,21 @@ LLM_URL = os.environ.get("LLM_URL", "").strip()          # empty = template only
 
 # Phrases that must never reach the output. A draft narrative is not a
 # regulatory filing and must not read like one.
-FORBIDDEN = ("suspicious transaction report", "suspicious activity report",
-             "sar filing", " sar ", " str ", "regulatory filing", "file a report")
+#
+# "SAR" is deliberately NOT a bare keyword. In Riyadh it is the Saudi Riyal,
+# and the policy corpus itself says "SAR 1,875" - a bare match rejected a
+# perfectly good narrative for quoting a threshold in local currency. The
+# patterns below target the *filing* sense only: SAR/STR as a noun being filed,
+# submitted or raised. Currency usage ("SAR 1,875", "12,500 SAR") passes.
+import re as _re
+FORBIDDEN_RE = [
+    _re.compile(r"suspicious\s+(transaction|activity)\s+report", _re.I),
+    _re.compile(r"\b(file|filing|submit|submitting|raise|raising|lodge)\s+"
+                r"(an?\s+)?(sar|str)\b", _re.I),
+    _re.compile(r"\b(sar|str)\s+(filing|submission|report)\b", _re.I),
+    _re.compile(r"regulatory\s+filing", _re.I),
+    _re.compile(r"\bfile\s+a\s+report\b", _re.I),
+]
 
 POLICIES = {}
 for f in sorted(glob.glob(os.path.join(POLICY_DIR, "*.json"))):
@@ -48,7 +61,7 @@ for f in sorted(glob.glob(os.path.join(POLICY_DIR, "*.json"))):
 print(f"[copilot] {len(POLICIES)} policy documents loaded", flush=True)
 
 STATE = {"drafts": 0, "adopted": 0, "rejected": 0, "llm": bool(LLM_URL),
-         "guard_trips": 0}
+         "guard_trips": 0, "fallbacks": 0, "by_generator": {"llm": 0, "template": 0}}
 DRAFTS = {}
 LOCK = threading.Lock()
 
@@ -166,10 +179,100 @@ def draft_ar(ctx, cits):
     return " ".join(p)
 
 
+def draft_llm(ctx, cits, timeout=90):
+    """Ask the model for the narrative, then verify it before accepting it.
+
+    The model is given the facts and the numbered citation set and may use
+    nothing else. Three checks before the output is allowed through:
+
+      1. every [n] it emits must exist in the citation set - a hallucinated
+         reference is a hard reject, not a footnote
+      2. it must actually cite something
+      3. it must pass the same forbidden-phrase guard as the template
+
+    Any failure returns None and the caller falls back to the template. A
+    grounded narrative that cannot be verified is worth less than a plain one
+    that can.
+    """
+    import urllib.request, re
+    a = ctx["alert"]
+    att = (ctx.get("attribution") or {}).get("attributions") or []
+    facts = [
+        f"Transaction {a.get('txn_id')}, amount {a.get('amount')}, merchant city {a.get('city')}.",
+        f"Referred by the existing screening engine under rule {a.get('rule_id')}: {a.get('rule_reason')}.",
+        # Spelled out because the model got this backwards in testing, reading a
+        # 0.9955 fraud score as "strong likelihood of being legitimate".
+        f"Detection model {a.get('model_version')} scored it {a.get('score')}, "
+        f"where the score is the estimated probability that the transaction is "
+        f"FRAUDULENT - 1.0 means almost certainly fraud, 0.0 means almost "
+        f"certainly legitimate.",
+    ]
+    if att:
+        facts.append("Per-decision feature attribution, largest first: " +
+                     "; ".join(f"{t['feature']} {t['value']:+.2f}" for t in att[:5]) + ".")
+    if _dominated(att):
+        facts.append("One feature dominates the attribution by more than 3x, which policy "
+                     "requires the analyst to examine rather than rely on.")
+    sources = "\n".join(f"[{c['n']}] {c['kind']}: {c['ref']} - {c['detail']}" for c in cits)
+    pol = "\n".join(f"- {p['id']}: {p['body']}" for p in ctx["policies"])
+
+    prompt = (
+        "You are drafting an investigator's case narrative for a bank fraud analyst.\n\n"
+        "RULES:\n"
+        "- Use ONLY the facts and policies given. Invent nothing.\n"
+        "- Cite every factual assertion with a bracketed number from the SOURCES list.\n"
+        "- Use only citation numbers that appear in SOURCES.\n"
+        "- This is a draft narrative, NOT a regulatory filing. Never use the words "
+        "'suspicious transaction report', 'SAR', 'STR' or 'filing'.\n"
+        "- State that the model score is decision support and not by itself a basis "
+        "for a disposition.\n"
+        "- Be concise: 5-8 sentences, plain professional English.\n"
+        "- Do not state a conclusion about whether fraud occurred. That is the "
+        "analyst's decision.\n\n"
+        f"FACTS:\n" + "\n".join(f"- {f}" for f in facts) +
+        f"\n\nPOLICIES:\n{pol}\n\nSOURCES:\n{sources}\n\nNARRATIVE:"
+    )
+    body = json.dumps({
+        "model": os.environ.get("LLM_MODEL", "nvidia/NVIDIA-Nemotron-Nano-9B-v2-FP8"),
+        # Nemotron is a reasoning model: without /no_think it spends the whole
+        # budget thinking and never emits the narrative (finish_reason: length).
+        "messages": [{"role": "system", "content": "/no_think"},
+                     {"role": "user", "content": prompt}],
+        "temperature": 0.2, "max_tokens": 1200,
+    }).encode()
+    req = urllib.request.Request(f"{LLM_URL}/v1/chat/completions", data=body,
+                                 headers={"Content-Type": "application/json"})
+    t0 = time.time()
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        out = json.loads(r.read().decode())
+    text = out["choices"][0]["message"]["content"].strip()
+    # strip any reasoning preamble the model emits before the narrative
+    if "NARRATIVE:" in text:
+        text = text.split("NARRATIVE:", 1)[1].strip()
+    used = {int(n) for n in re.findall(r"\[(\d+)\]", text)}
+    valid = {c["n"] for c in cits}
+    if not used:
+        return None, "model cited nothing"
+    bad = used - valid
+    if bad:
+        return None, f"model cited sources that do not exist: {sorted(bad)}"
+    if guard(text):
+        return None, f"model output tripped the guard: {guard(text)}"
+    return {"text": text, "latency_s": round(time.time() - t0, 2),
+            "cited": sorted(used)}, None
+
+
 def guard(text):
-    """Refuse to emit anything that reads as a regulatory filing."""
-    low = f" {text.lower()} "
-    return [w.strip() for w in FORBIDDEN if w in low]
+    """Refuse to emit anything that reads as a regulatory filing.
+
+    Matches the filing *sense* of SAR/STR, not the token. See FORBIDDEN_RE.
+    """
+    hits = []
+    for rx in FORBIDDEN_RE:
+        m = rx.search(text or "")
+        if m:
+            hits.append(m.group(0).strip())
+    return hits
 
 
 app = Flask(__name__)
@@ -182,6 +285,20 @@ def make_draft(alert_id):
         return jsonify({"error": "alert not found", "detail": ctx["errors"]}), 404
     en, cits = draft_en(ctx)
     ar = draft_ar(ctx, cits)
+    generator, fallback_reason, llm_meta = "template", None, None
+    if LLM_URL and (request.args.get("generator") or "auto") != "template":
+        try:
+            res, why = draft_llm(ctx, cits)
+            if res:
+                en, generator, llm_meta = res["text"], "llm", res
+            else:
+                fallback_reason = why
+                STATE["rejected"] += 1
+        except Exception as e:
+            fallback_reason = f"llm unreachable: {type(e).__name__}"
+    if fallback_reason:
+        print(f"[copilot] falling back to template: {fallback_reason}", flush=True)
+        STATE["fallbacks"] += 1
     bad = guard(en) + guard(ar)
     if bad:
         STATE["guard_trips"] += 1
@@ -191,8 +308,10 @@ def make_draft(alert_id):
     d = {
         "draft_id": did, "alert_id": alert_id,
         "status": "machine-drafted",          # never "final", never "report"
-        "generator": "template" if not LLM_URL else "llm",
+        "generator": generator,
         "llm_available": bool(LLM_URL),
+        "fallback_reason": fallback_reason,
+        "llm": llm_meta,
         "created_ms": P.now_ms(),
         "narrative_en": en, "narrative_ar": ar,
         "citations": cits,
@@ -203,6 +322,7 @@ def make_draft(alert_id):
     with LOCK:
         DRAFTS[did] = d
         STATE["drafts"] += 1
+        STATE["by_generator"][generator] = STATE["by_generator"].get(generator, 0) + 1
     return jsonify(d)
 
 
