@@ -1,0 +1,275 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Entity graph · NVIDIA GB10</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e13; --panel:#111820; --panel2:#161f2a; --line:#22303f;
+  --txt:#e8eef5; --dim:#8ba0b6; --green:#76b900; --red:#ff4757; --amber:#ffa502;
+  --dell:#0076CE; --dell-lt:#4aa8e8; --dell-soft:rgba(0,118,206,.14);
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+body{background:var(--bg);color:var(--txt);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;
+  height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.brandrule{height:3px;background:linear-gradient(90deg,var(--dell) 0%,var(--dell) 48%,var(--green) 52%,var(--green) 100%);flex-shrink:0}
+header{display:flex;align-items:center;gap:18px;padding:12px 24px;background:var(--panel);
+  border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap}
+h1{font-size:20px;font-weight:650;letter-spacing:-.02em}
+h1 span{color:var(--green)}
+.spacer{flex:1}
+a.nav{color:var(--dim);text-decoration:none;font:600 11px/1 var(--mono);letter-spacing:.08em;
+  border:1px solid var(--line);padding:8px 12px;border-radius:6px}
+a.nav:hover{color:var(--txt);border-color:var(--dim)}
+.badge{font:600 11px/1 var(--mono);letter-spacing:.07em;padding:7px 11px;border-radius:6px;
+  background:rgba(118,185,0,.13);color:var(--green);border:1px solid rgba(118,185,0,.35)}
+.badge.warn{background:rgba(255,165,2,.13);color:var(--amber);border-color:rgba(255,165,2,.4)}
+
+/* criterion 13: degraded banner, never a white screen */
+#degraded{display:none;padding:10px 24px;background:rgba(255,71,87,.14);
+  border-bottom:1px solid rgba(255,71,87,.45);color:#ffb3ba;font-size:13.5px;flex-shrink:0}
+#degraded.on{display:block}
+#degraded b{color:var(--red)}
+
+main{flex:1;display:grid;grid-template-columns:1fr 340px;gap:0;min-height:0}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+#cv{width:100%;height:100%;display:block}
+.side{border-left:1px solid var(--line);background:var(--panel);padding:18px 20px;
+  overflow:auto;display:flex;flex-direction:column;gap:16px}
+.side h3{font:600 10.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(34,48,63,.6);font-size:13px}
+.kv:last-child{border-bottom:none}
+.kv b{font:700 13px/1 var(--mono);font-variant-numeric:tabular-nums}
+.kv b.hi{color:var(--red)}.kv b.ok{color:var(--green)}
+.note{font-size:12px;color:var(--dim);line-height:1.6;background:var(--panel2);
+  border:1px solid var(--line);border-left:2px solid var(--dell);border-radius:8px;padding:12px 14px}
+.legend{display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--dim)}
+.legend i{display:flex;align-items:center;gap:9px;font-style:normal}
+.legend s{width:11px;height:11px;border-radius:50%;display:inline-block;text-decoration:none}
+
+/* status bar - always visible */
+.statusbar{display:flex;gap:22px;flex-wrap:wrap;align-items:center;padding:9px 24px;
+  background:#0c1219;border-top:1px solid var(--line);flex-shrink:0;font-size:12px}
+.statusbar i{font-style:normal;color:var(--dim);text-transform:uppercase;
+  letter-spacing:.07em;font:600 9.5px/1 var(--mono)}
+.statusbar b{font:700 12px/1 var(--mono);color:var(--txt);font-variant-numeric:tabular-nums}
+.statusbar b.mode{color:var(--amber)}
+.statusbar b.ok{color:var(--green)}
+.statusbar b.bad{color:var(--red)}
+
+/* presenter panel - key chord only, never a visible button */
+#presenter{position:fixed;right:18px;bottom:56px;width:290px;background:var(--panel);
+  border:1px solid var(--dell-lt);border-radius:12px;padding:16px 18px;display:none;
+  box-shadow:0 18px 50px rgba(0,0,0,.6);z-index:50}
+#presenter.on{display:block}
+#presenter h4{font:600 10.5px/1 var(--mono);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--dell-lt);margin-bottom:12px}
+#presenter .r{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:11px}
+#presenter button{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+  font:600 11px/1 var(--mono);padding:7px 10px;border-radius:6px;cursor:pointer}
+#presenter button:hover{border-color:var(--dell-lt);color:var(--dell-lt)}
+#presenter small{color:var(--dim);font-size:11px;display:block;margin-top:8px;line-height:1.5}
+</style></head><body>
+<div class="brandrule"></div>
+<header>
+  <h1>Entity <span>graph</span></h1>
+  <span class="badge" id="b-cards">–</span>
+  <span class="spacer"></span>
+  <a class="nav" href="/compare">SCREENING COMPARISON</a>
+  <a class="nav" href="/">LIVE DETECTION</a>
+</header>
+
+<div id="degraded"><b>Degraded.</b> <span id="degraded-why"></span> The view below is the last
+good data received; it is not live. Nothing has been lost — the pipeline resumes automatically.</div>
+
+<main>
+  <canvas id="cv"></canvas>
+  <aside class="side">
+    <div>
+      <h3>Focus transaction</h3>
+      <div id="focus"></div>
+    </div>
+    <div>
+      <h3>Why the graph matters here</h3>
+      <div class="note" id="note">…</div>
+    </div>
+    <div>
+      <h3>Legend</h3>
+      <div class="legend">
+        <i><s style="background:#ff4757"></s>transaction, model score ≥ 0.5</i>
+        <i><s style="background:#2f4258"></s>transaction, below 0.5</i>
+        <i><s style="background:#4aa8e8"></s>card</i>
+        <i><s style="background:#76b900"></s>merchant</i>
+        <i><s style="background:#ffa502;border-radius:2px"></s>focus</i>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<div class="statusbar">
+  <span><i>Feed</i> <b id="s-src">–</b></span>
+  <span><i>Fraud-rate mode</i> <b class="mode" id="s-mode">–</b></span>
+  <span><i>TPS</i> <b id="s-tps">–</b></span>
+  <span><i>Queue depth</i> <b id="s-buf">–</b></span>
+  <span><i>End-to-end</i> <b id="s-e2e">–</b></span>
+  <span><i>Model</i> <b id="s-model">–</b></span>
+  <span><i>Pipeline</i> <b id="s-state">–</b></span>
+</div>
+
+<div id="presenter">
+  <h4>Presenter</h4>
+  <div class="r">
+    <button data-tps="5">5 TPS</button><button data-tps="60">60</button>
+    <button data-tps="400">400</button><button data-tps="5000">5000</button>
+  </div>
+  <div class="r">
+    <button data-mode="demo">demo rate</button><button data-mode="realistic">true rate</button>
+    <button id="p-pause">pause</button><button id="p-resume">resume</button>
+  </div>
+  <div class="r" id="p-scen"></div>
+  <small>Ctrl+Shift+P to hide. Customers should never see this panel.</small>
+</div>
+
+<script>
+var C = document.getElementById('cv'), X = C.getContext('2d');
+var G = null, ROW = 1, T = 0;
+
+function fit(){ var r = C.getBoundingClientRect();
+  C.width = r.width * devicePixelRatio; C.height = r.height * devicePixelRatio;
+  X.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
+window.addEventListener('resize', fit); fit();
+
+// Deterministic radial layout: merchant centre, cards on a ring, transactions
+// between them. No physics - a fan-in has to read the same way every time it
+// is shown, and a settling force graph does not.
+function layout(g){
+  var w = C.width/devicePixelRatio, h = C.height/devicePixelRatio;
+  var cx = w/2, cy = h/2, P = {};
+  var merch = g.nodes.filter(function(n){return n.kind==='merchant'});
+  var cards = g.nodes.filter(function(n){return n.kind==='card'});
+  var txns  = g.nodes.filter(function(n){return n.kind==='txn'});
+  if(merch[0]) P[merch[0].id] = {x:cx, y:cy, r:16};
+  var R = Math.min(w,h)*0.40;
+  cards.forEach(function(n,i){
+    var a = (i/Math.max(cards.length,1))*Math.PI*2 - Math.PI/2;
+    P[n.id] = {x:cx+Math.cos(a)*R, y:cy+Math.sin(a)*R, r:9};
+  });
+  txns.forEach(function(n,i){
+    var a = (i/Math.max(txns.length,1))*Math.PI*2 - Math.PI/2;
+    var rr = R*0.55;
+    P[n.id] = {x:cx+Math.cos(a)*rr, y:cy+Math.sin(a)*rr, r:n.focus?11:6};
+  });
+  return P;
+}
+
+function draw(){
+  var w = C.width/devicePixelRatio, h = C.height/devicePixelRatio;
+  X.clearRect(0,0,w,h);
+  if(!G){ X.fillStyle='#8ba0b6'; X.font='13px system-ui';
+          X.fillText('loading…', 20, 28); return; }
+  var P = layout(G);
+  T += 0.02;
+  G.edges.forEach(function(e){
+    var a=P[e.s], b=P[e.t]; if(!a||!b) return;
+    X.strokeStyle='rgba(74,168,232,0.22)'; X.lineWidth=1;
+    X.beginPath(); X.moveTo(a.x,a.y); X.lineTo(b.x,b.y); X.stroke();
+  });
+  G.nodes.forEach(function(n){
+    var p=P[n.id]; if(!p) return;
+    var col = n.kind==='card' ? '#4aa8e8'
+            : n.kind==='merchant' ? '#76b900'
+            : (n.score>=0.5 ? '#ff4757' : '#2f4258');
+    if(n.focus){
+      var pulse = 11 + Math.sin(T*2)*3;
+      X.strokeStyle='#ffa502'; X.lineWidth=2;
+      X.beginPath(); X.arc(p.x,p.y,pulse+6,0,Math.PI*2); X.stroke();
+      col = '#ffa502';
+    }
+    X.fillStyle=col; X.beginPath(); X.arc(p.x,p.y,p.r,0,Math.PI*2); X.fill();
+    if(n.kind!=='txn'){
+      X.fillStyle='#e8eef5'; X.font='600 11px ui-monospace,monospace';
+      X.textAlign='center'; X.fillText(n.label, p.x, p.y - p.r - 7);
+    }
+  });
+  requestAnimationFrame(draw);
+}
+
+function loadGraph(row){
+  fetch('/api/graph/'+row).then(function(r){return r.json()}).then(function(g){
+    if(g.error) return; G = g;
+    document.getElementById('b-cards').textContent =
+      g.cards_on_merchant + ' CARDS → 1 MERCHANT';
+    document.getElementById('note').textContent = g.note;
+    var f = g.focus;
+    document.getElementById('focus').innerHTML =
+      row2('Amount', f.amount.toFixed(2)) + row2('Merchant city', f.city) +
+      row2('Category', f.mcc_name) + row2('Entry mode', f.chip) +
+      row2('Model score', (g.nodes[0].score).toFixed(4), g.nodes[0].score>=0.5?'hi':'ok') +
+      row2('Txns on this card', g.txns_on_card) +
+      row2('Txns on this merchant', g.txns_on_merchant);
+  }).catch(function(){});
+}
+function row2(k,v,cls){ return '<div class="kv"><span>'+k+'</span><b class="'+(cls||'')+'">'+v+'</b></div>'; }
+
+function status(){
+  fetch('/api/stream').then(function(r){return r.json()}).then(function(s){
+    document.getElementById('s-src').textContent = s.source;
+    document.getElementById('s-buf').textContent = s.buffer;
+    document.getElementById('s-e2e').textContent = (s.e2e_latency_ms||0).toFixed(0)+' ms';
+    document.getElementById('s-model').textContent = (s.model_latency_ms||0).toFixed(3)+' ms';
+    var st = document.getElementById('s-state');
+    var bad = s.degraded || !s.connected;
+    st.textContent = bad ? 'DEGRADED' : 'HEALTHY';
+    st.className = bad ? 'bad' : 'ok';
+    var d = document.getElementById('degraded');
+    d.className = bad ? 'on' : '';
+    document.getElementById('degraded-why').textContent =
+      s.last_error ? ('Stream error: '+s.last_error+'.')
+                   : (s.stale_ms ? ('No new transactions for '+(s.stale_ms/1000).toFixed(0)+'s.') : '');
+  }).catch(function(){
+    var st=document.getElementById('s-state'); st.textContent='UNREACHABLE'; st.className='bad';
+    var d=document.getElementById('degraded'); d.className='on';
+    document.getElementById('degraded-why').textContent='The demo API is not responding.';
+  });
+  fetch('http://'+location.hostname+':8091/status').then(function(r){return r.json()}).then(function(g){
+    document.getElementById('s-mode').textContent = g.mode;
+    document.getElementById('s-tps').textContent = Math.round(g.rate);
+  }).catch(function(){});
+}
+
+// presenter controls: key chord only, never a visible affordance
+var GEN = 'http://'+location.hostname+':8091';
+function post(p, body){
+  return fetch(GEN+p, {method:'POST', headers:{'Content-Type':'application/json'},
+                       body: body?JSON.stringify(body):'{}'}).catch(function(){});
+}
+document.addEventListener('keydown', function(e){
+  if(e.ctrlKey && e.shiftKey && (e.key==='P'||e.key==='p')){
+    e.preventDefault();
+    document.getElementById('presenter').classList.toggle('on');
+  }
+  if(e.key===' ' && e.target===document.body){ e.preventDefault(); post('/pause'); }
+});
+document.querySelectorAll('#presenter [data-tps]').forEach(function(b){
+  b.onclick=function(){ post('/rate',{tps:parseInt(b.dataset.tps,10)}); };
+});
+document.querySelectorAll('#presenter [data-mode]').forEach(function(b){
+  b.onclick=function(){ post('/mode',{mode:b.dataset.mode}); };
+});
+document.getElementById('p-pause').onclick=function(){ post('/pause'); };
+document.getElementById('p-resume').onclick=function(){ post('/resume'); };
+fetch(GEN+'/scenarios').then(function(r){return r.json()}).then(function(sc){
+  var host=document.getElementById('p-scen');
+  Object.keys(sc).forEach(function(k){
+    if(sc[k].status!=='ready') return;
+    var b=document.createElement('button'); b.textContent=k.split('-')[0];
+    b.title=k; b.onclick=function(){ post('/inject/'+k); };
+    host.appendChild(b);
+  });
+}).catch(function(){});
+
+var q = new URLSearchParams(location.search);
+ROW = parseInt(q.get('row')||'1',10);
+loadGraph(ROW); draw(); status(); setInterval(status, 2000);
+setInterval(function(){ loadGraph(ROW); }, 15000);
+</script>
+</body></html>

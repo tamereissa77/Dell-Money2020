@@ -119,6 +119,48 @@ train: tools
 	  nvcr.io/nvidia/cugraph/financial-fraud-training:2.0.0
 	@bash scripts/install_model.sh
 
+# --- offline bundle --------------------------------------------------------
+# The demo is presented with the network cable unplugged. Everything it needs
+# has to be on disk first: images, the Nemotron weights (a named volume, not an
+# image layer - see the comment in docker-compose.yml) and the preprocessed
+# TabFormer data, which is gitignored and therefore not in a clone.
+OFFLINE ?= offline
+.PHONY: offline-save offline-load offline-verify
+
+offline-save:
+	@mkdir -p $(OFFLINE)/images
+	@echo "saving images (this is tens of GB - expect minutes, not seconds)"
+	@imgs=$$(docker compose config 2>/dev/null | python3 -c "import sys,yaml;d=yaml.safe_load(sys.stdin);print(' '.join(sorted({s['image'] for s in d['services'].values() if s.get('image')})))"); \
+	  echo "  $$imgs"; \
+	  start=$$(date +%s); \
+	  docker save $$imgs | gzip -1 > $(OFFLINE)/images/stack.tar.gz; \
+	  echo "  images: $$(du -h $(OFFLINE)/images/stack.tar.gz | cut -f1) in $$(( $$(date +%s) - start ))s"
+	@echo "saving the model weights volume"
+	@docker run --rm -v financial-fraud-detection_nemotron-hf:/src -v $(CURDIR)/$(OFFLINE):/out \
+	  alpine tar czf /out/nemotron-hf.tar.gz -C /src . 2>/dev/null
+	@echo "  weights: $$(du -h $(OFFLINE)/nemotron-hf.tar.gz | cut -f1)"
+	@echo "saving the preprocessed dataset"
+	@tar czf $(OFFLINE)/tabformer-gnn.tar.gz data/TabFormer/gnn_np 2>/dev/null
+	@echo "  data: $$(du -h $(OFFLINE)/tabformer-gnn.tar.gz | cut -f1)"
+	@cd $(OFFLINE) && sha256sum images/stack.tar.gz nemotron-hf.tar.gz tabformer-gnn.tar.gz > MANIFEST.sha256
+	@echo "manifest:"; sed 's|^|  |' $(OFFLINE)/MANIFEST.sha256
+	@echo "total: $$(du -sh $(OFFLINE) | cut -f1)"
+
+offline-verify:
+	@cd $(OFFLINE) && sha256sum -c MANIFEST.sha256 | sed 's|^|  |'
+
+offline-load:
+	@test -f $(OFFLINE)/MANIFEST.sha256 || { echo "no bundle in $(OFFLINE)/" >&2; exit 1; }
+	@$(MAKE) --no-print-directory offline-verify
+	@echo "loading images ..."; start=$$(date +%s); \
+	  gunzip -c $(OFFLINE)/images/stack.tar.gz | docker load | tail -2; \
+	  echo "  loaded in $$(( $$(date +%s) - start ))s"
+	@docker volume create financial-fraud-detection_nemotron-hf >/dev/null
+	@docker run --rm -v financial-fraud-detection_nemotron-hf:/dest -v $(CURDIR)/$(OFFLINE):/in \
+	  alpine tar xzf /in/nemotron-hf.tar.gz -C /dest
+	@tar xzf $(OFFLINE)/tabformer-gnn.tar.gz
+	@echo "loaded. now run: make up && make prewarm"
+
 # --- v2 feed mode ----------------------------------------------------------
 # The UI reads either the pre-scored file (v1 behaviour, the default) or the
 # live txn.scored stream. It is a container env var fixed at create time, so it

@@ -425,6 +425,71 @@ def api_scenarios():
                           key=lambda g: -max((r.get("scored_ms") or 0) for r in g["rows"])))
 
 
+# --- graph neighbourhood ----------------------------------------------------
+# Built once: transaction -> its card and merchant, and the reverse indexes.
+# The GNN already reasons over these edges; the UI has never shown them.
+from collections import defaultdict as _dd
+_BY_USER, _BY_MERCH = _dd(list), _dd(list)
+for _i in range(len(y)):
+    _BY_USER[int(e_ut[0][_i])].append(_i)
+    _BY_MERCH[int(e_tm[1][_i])].append(_i)
+print(f"[demo] graph index: {len(_BY_USER)} cards, {len(_BY_MERCH)} merchants", flush=True)
+
+
+@app.get("/api/graph/<int:i>")
+def api_graph(i):
+    """The neighbourhood around one transaction: its card, its merchant, and
+    the other transactions those two touch.
+
+    This is the screen that justifies the graph model. For a fan-in typology
+    the merchant node carries many unrelated cards, and that structure exists
+    only across accounts - a per-transaction rules engine has nowhere to see it.
+    """
+    if i < 0 or i >= len(SCORES):
+        return jsonify({"error": "out of range"}), 404
+    cap = min(int(request.args.get("cap", 24)), 60)
+    u, m = int(e_ut[0][i]), int(e_tm[1][i])
+    sib_u = [k for k in _BY_USER[u] if k != i][:cap]
+    sib_m = [k for k in _BY_MERCH[m] if k != i][:cap]
+
+    nodes = [{"id": f"t{i}", "kind": "txn", "focus": True, "label": f"{row(i)['amount']:.2f}",
+              "score": round(float(SCORES[i]), 4), "row": i},
+             {"id": f"u{u}", "kind": "card", "label": f"card {u}",
+              "degree": len(_BY_USER[u])},
+             {"id": f"m{m}", "kind": "merchant", "label": f"merchant {m}",
+              "degree": len(_BY_MERCH[m])}]
+    edges = [{"s": f"u{u}", "t": f"t{i}"}, {"s": f"t{i}", "t": f"m{m}"}]
+    seen_cards = {u}
+    for k in sib_u:
+        nodes.append({"id": f"t{k}", "kind": "txn", "label": f"{row(k)['amount']:.2f}",
+                      "score": round(float(SCORES[k]), 4), "row": k})
+        edges.append({"s": f"u{u}", "t": f"t{k}"})
+    for k in sib_m:
+        ku = int(e_ut[0][k])
+        if f"t{k}" not in {n["id"] for n in nodes}:
+            nodes.append({"id": f"t{k}", "kind": "txn", "label": f"{row(k)['amount']:.2f}",
+                          "score": round(float(SCORES[k]), 4), "row": k})
+        if ku not in seen_cards:
+            seen_cards.add(ku)
+            nodes.append({"id": f"u{ku}", "kind": "card", "label": f"card {ku}",
+                          "degree": len(_BY_USER[ku])})
+            edges.append({"s": f"u{ku}", "t": f"t{k}"})
+        edges.append({"s": f"t{k}", "t": f"m{m}"})
+    return jsonify({
+        "focus": row(i), "nodes": nodes, "edges": edges,
+        "cards_on_merchant": len({int(e_ut[0][k]) for k in _BY_MERCH[m]}),
+        "txns_on_merchant": len(_BY_MERCH[m]),
+        "txns_on_card": len(_BY_USER[u]),
+        "note": "Many unrelated cards converging on one merchant is a layering "
+                "indicator (POL-NET-01). The structure exists across accounts, "
+                "which is what a per-transaction rules engine cannot see.",
+    })
+
+
+@app.get("/graph")
+def graph_page(): return send_from_directory("static", "graph.html")
+
+
 @app.get("/compare")
 def compare(): return send_from_directory("static","compare.html")
 

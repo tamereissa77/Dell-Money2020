@@ -325,7 +325,12 @@ services:
     ports:
       - "${COPILOT_LLM_PORT:-8097}:8000"
     volumes:
-      - nemotron-cache:/opt/nim/.cache
+      # vLLM stores weights in the HuggingFace cache, NOT in /opt/nim/.cache -
+      # that path is a NIM convention and this is plain vLLM. Mounted at the
+      # wrong path the 9.6 GB of weights land in the container's writable
+      # layer, where `docker save` cannot see them and `compose down` discards
+      # them. Named volume at the real path instead.
+      - nemotron-hf:/root/.cache/huggingface
       - ./cache/nvcache:/nvcache
     environment:
       CUDA_CACHE_PATH: /nvcache
@@ -360,7 +365,6 @@ volumes:
   redpanda-data:
   alert-state:
   audit-state:
-  # VSS already downloaded these weights; reuse rather than pull 9B again.
-  nemotron-cache:
-    external: true
-    name: mdx_nvidia_nemotron_nano_9b_v2_fp8_cache
+  # The Nemotron weights. Kept in a named volume so they survive `compose down`
+  # and can be exported with the offline bundle.
+  nemotron-hf:

@@ -4,3 +4,4 @@
 training/trained_models_np/
 **/__pycache__/
 *.log
+offline/
