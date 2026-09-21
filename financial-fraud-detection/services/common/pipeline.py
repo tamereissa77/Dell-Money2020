@@ -43,6 +43,13 @@ def consumer(group, topics, offset="latest"):
         "auto.offset.reset": offset,
         "enable.auto.commit": True,
         "session.timeout.ms": 10000,
+        # librdkafka prefetches up to 1 GB PER PARTITION by default. With three
+        # topics and 15 partitions a consumer that falls behind will happily
+        # buffer ~15 GB of RAM before anything complains - alert-svc reached
+        # 19.65 GiB this way during an overnight run. Cap it: falling behind
+        # should show up as lag, which is visible, not as memory, which is not.
+        "queued.max.messages.kbytes": 65536,
+        "fetch.max.bytes": 52428800,
     })
     c.subscribe(topics if isinstance(topics, list) else [topics])
     return c

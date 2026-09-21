@@ -23,6 +23,11 @@ from common import pipeline as P
 PORT = int(os.environ.get("PORT", "8094"))
 DB = os.environ.get("ALERT_DB", "/state/alerts.db")
 JOIN_WINDOW_S = float(os.environ.get("JOIN_WINDOW_S", "30"))
+# The alerts table is a live queue, not a system of record - Stage 3's audit
+# trail is the durable artefact. Left unbounded it reached 742k rows in 18
+# hours and every index-less query degraded with it.
+MAX_ROWS = int(os.environ.get("ALERT_MAX_ROWS", "200000"))
+PRUNE_EVERY_S = float(os.environ.get("ALERT_PRUNE_EVERY_S", "60"))
 
 # A repeat false-positive pattern may be suppressed - but suppression is a
 # recorded decision with a reason, never a silent drop. Suppressed alerts stay
@@ -61,6 +66,13 @@ def db():
         );
         CREATE INDEX IF NOT EXISTS ix_alerts_score ON alerts(score DESC);
         CREATE INDEX IF NOT EXISTS ix_alerts_state ON alerts(state);
+        -- txn_id drives the label backfill and incumbent_rank drives the
+        -- incumbent-order queue. Without these, both are full table scans:
+        -- at 740k rows a single txn_id lookup cost 61ms, and the backfill runs
+        -- 200 of them twice a second. That is what silently throttled the
+        -- pipeline from ~6,900 TPS to 26 TPS over an 18-hour run.
+        CREATE INDEX IF NOT EXISTS ix_alerts_txn ON alerts(txn_id);
+        CREATE INDEX IF NOT EXISTS ix_alerts_incrank ON alerts(incumbent_rank);
         """)
         # Additive migration: CREATE TABLE IF NOT EXISTS will not add a column
         # to a database that already exists on the volume.
@@ -72,7 +84,7 @@ def db():
 
 
 STATE = {"alerts_in": 0, "scores_in": 0, "joined": 0, "unmatched": 0,
-         "suppressed": 0, "incumbent_seq": 0, "emit_errors": 0, "last_error": None}
+         "suppressed": 0, "incumbent_seq": 0, "emit_errors": 0, "last_error": None, "pruned": 0}
 LOCK = threading.Lock()
 # Rolling count of low-score alerts per rule, for the suppression heuristic.
 _rule_noise = {}
@@ -192,6 +204,7 @@ def run():
         prod.poll(0)
 
     last_gc = time.time()
+    last_prune = time.time()
     while True:
         msg = cons.poll(0.05)
         if msg is not None and not msg.error():
@@ -240,6 +253,21 @@ def run():
             if len(scores) > 200000:
                 for k in list(scores)[:50000]:
                     scores.pop(k, None)
+
+        if now - last_prune > PRUNE_EVERY_S:
+            last_prune = now
+            try:
+                with _dblock:
+                    n = db().execute("SELECT COUNT(*) FROM alerts").fetchone()[0]
+                    if n > MAX_ROWS:
+                        db().execute(
+                            "DELETE FROM alerts WHERE incumbent_rank <= "
+                            "(SELECT MAX(incumbent_rank) - ? FROM alerts)",
+                            (MAX_ROWS,))
+                        db().commit()
+                        STATE["pruned"] += n - MAX_ROWS
+            except Exception as e:
+                print(f"[alert] prune failed: {e}", flush=True)
 
 
 app = Flask(__name__)
