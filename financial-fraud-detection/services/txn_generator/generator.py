@@ -104,26 +104,18 @@ def row_payload(i, scenario=None):
 
 
 # --- scenarios --------------------------------------------------------------
-# Stage 1 ships the injection mechanism and the one typology that is directly
-# recoverable from the data. The remaining four are synthesised in Stage 2;
-# they are declared here so the control API surface is stable and the UI can
-# already list them.
-def _rome_like():
-    """merchant-city-anomaly: small amount, geographically wrong. Reproduces
-    the Rome $98.04 case the v1 booth demo is known for."""
-    cand = [i for i in FRAUD_ROWS[:4000]
-            if float(disp.iloc[i]["Amount"]) < 150
-            and str(disp.iloc[i]["City"]).strip() not in ("ONLINE", "", "nan")]
-    return random.Random(SEED).choice(cand) if cand else int(FRAUD_ROWS[0])
+# Every typology is a curated sequence of REAL rows from the test set, not a
+# fabricated transaction: scoring-svc looks up features by row index, so a
+# synthetic row would have no features and could not be scored. See
+# scenarios.py for how each is selected.
+from scenarios import Catalogue
 
+CAT = Catalogue(disp, y, e_ut, e_tm, seed=SEED)
+SCENARIOS = ["merchant-city-anomaly", "geo-velocity", "cnp-burst",
+             "account-takeover", "mule-fanin-fanout"]
+for _n in SCENARIOS:
+    print(f"[gen] scenario {_n}: {CAT.describe(_n)}", flush=True)
 
-SCENARIOS = {
-    "merchant-city-anomaly": _rome_like,
-    "geo-velocity": None,
-    "cnp-burst": None,
-    "account-takeover": None,
-    "mule-fanin-fanout": None,
-}
 PENDING = []        # rows queued by an inject call, emitted next
 
 
@@ -186,7 +178,7 @@ def status():
         "configured_fraud_rate": FRAUD_RATE.get(STATE["mode"]),
         "true_base_rate": TRUE_BASE_RATE,
         "test_set_rate": round(TEST_SET_RATE, 5),
-        "scenarios": {k: ("ready" if v else "stage-2") for k, v in SCENARIOS.items()},
+        "scenarios": {n: CAT.describe(n)["status"] for n in SCENARIOS},
         "seed": SEED,
     })
 
@@ -210,14 +202,24 @@ def set_mode():
 @app.post("/inject/<scenario>")
 def inject(scenario):
     if scenario not in SCENARIOS:
-        return jsonify({"error": "unknown scenario", "known": list(SCENARIOS)}), 404
-    fn = SCENARIOS[scenario]
-    if fn is None:
-        return jsonify({"error": "not implemented until stage 2", "scenario": scenario}), 501
+        return jsonify({"error": "unknown scenario", "known": SCENARIOS}), 404
+    rows = CAT.built.get(scenario) or []
+    if not rows:
+        return jsonify({"error": "no rows in this dataset match the typology",
+                        "scenario": scenario}), 503
     with LOCK:
-        PENDING.append((fn(), scenario))
+        # The whole sequence goes next, in order and back-to-back: the pattern
+        # only reads as a pattern if the transactions arrive together.
+        for i in rows:
+            PENDING.append((int(i), scenario))
     STATE["last_scenario"] = scenario
-    return jsonify({"injected": scenario, "queued": len(PENDING)})
+    return jsonify({"injected": scenario, "rows": len(rows),
+                    "detail": CAT.describe(scenario), "queued": len(PENDING)})
+
+
+@app.get("/scenarios")
+def scenarios():
+    return jsonify({n: CAT.describe(n) for n in SCENARIOS})
 
 
 @app.post("/pause")
