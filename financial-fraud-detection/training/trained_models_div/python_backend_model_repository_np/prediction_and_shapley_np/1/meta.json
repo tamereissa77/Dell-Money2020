@@ -1,0 +1,49 @@
+{
+  "edges": [
+    {
+      "attr_dim": 0,
+      "dst": "transaction",
+      "num_edges": 197556,
+      "rel": "rev_to",
+      "src": "merchant"
+    },
+    {
+      "attr_dim": 0,
+      "dst": "merchant",
+      "num_edges": 197556,
+      "rel": "to",
+      "src": "transaction"
+    },
+    {
+      "attr_dim": 0,
+      "dst": "user",
+      "num_edges": 197556,
+      "rel": "rev_to",
+      "src": "transaction"
+    },
+    {
+      "attr_dim": 0,
+      "dst": "transaction",
+      "num_edges": 197556,
+      "rel": "to",
+      "src": "user"
+    }
+  ],
+  "nodes": {
+    "merchant": {
+      "feat_dim": 24,
+      "id": 0,
+      "num_nodes": 32893
+    },
+    "transaction": {
+      "feat_dim": 37,
+      "id": 1,
+      "num_nodes": 197556
+    },
+    "user": {
+      "feat_dim": 13,
+      "id": 2,
+      "num_nodes": 4406
+    }
+  }
+}

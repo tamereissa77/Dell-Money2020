@@ -122,7 +122,23 @@ def create_feature_mask(columns, start_mask_id=0):
     return mask_mapping, feature_mask
 
 
-def preprocess_data(tabformer_base_path):
+def preprocess_data(tabformer_base_path, exclude_cols=None, out_name="gnn_np",
+                    split_years=(2018, 2018, (2019, 2020))):
+    """DEMO ADDITION: `exclude_cols` and `out_name`.
+
+    TabFormer's synthetic fraud is clustered geographically by era - every one
+    of the 2,087 frauds in 2019 (the blueprint's test split, Year > 2018) is in
+    Rome, Italy, with a blank Zip. City alone therefore scores F1 0.99 on the
+    test set, beating the trained model's 0.9578, and the model's top Shapley
+    driver is "Merchant city" because it learned that shortcut.
+
+    Passing exclude_cols=["City", "Zip"] drops the geographic columns from the
+    predictor set so the model's real signal can be measured. out_name keeps
+    the result beside the original rather than overwriting it, so the v1 booth
+    demo keeps working.
+
+    Both default to the original behaviour - the blueprint path is unchanged.
+    """
     """
     Preprocess TabFormer data for node prediction (fraud transaction detection).
     
@@ -142,7 +158,7 @@ def preprocess_data(tabformer_base_path):
     tabformer_raw_file_path = os.path.join(
         tabformer_base_path, "raw", "card_transaction.v1.csv"
     )
-    tabformer_gnn = os.path.join(tabformer_base_path, "gnn_np")
+    tabformer_gnn = os.path.join(tabformer_base_path, out_name)
 
     if not os.path.exists(tabformer_gnn):
         os.makedirs(tabformer_gnn)
@@ -304,6 +320,12 @@ def preprocess_data(tabformer_base_path):
         COL_MERCHANT,
     ]
 
+    if exclude_cols:
+        dropped = [c for c in nominal_predictors if c in exclude_cols]
+        nominal_predictors = [c for c in nominal_predictors if c not in exclude_cols]
+        numerical_predictors = [c for c in numerical_predictors if c not in exclude_cols]
+        print(f"EXCLUDING predictors: {dropped}", flush=True)
+
     predictor_columns = numerical_predictors + nominal_predictors
     target_column = [COL_FRAUD]
 
@@ -329,10 +351,25 @@ def preprocess_data(tabformer_base_path):
 
     data = data.sample(frac=1, random_state=42).reset_index(drop=True)
 
-    # Split by year
-    training_idx = data[COL_YEAR] < 2018
-    validation_idx = data[COL_YEAR] == 2018
-    test_idx = data[COL_YEAR] > 2018
+    # Split by year.
+    # DEMO ADDITION: the split is parameterised because the default one lands
+    # the whole test period inside TabFormer's "Rome era" - every 2019 fraud is
+    # in Rome, so City alone scores F1 0.99 there. Testing on 2015-2016, where
+    # fraud spans 381 and 418 cities respectively, evaluates the model against
+    # geography that actually varies.
+    _tr, _va, _te = split_years
+    # The split must partition the data exactly (asserted below), so drop any
+    # year the chosen split does not claim. With the default split this is a
+    # no-op; with a narrower one it discards the years outside it.
+    _keep = ((data[COL_YEAR] < _tr) | (data[COL_YEAR] == _va)
+             | (data[COL_YEAR].isin(list(_te))))
+    if not bool(_keep.all()):
+        print(f"Restricting to split years: dropping {int((~_keep).sum()):,} rows",
+              flush=True)
+        data = data[_keep].reset_index(drop=True)
+    training_idx = data[COL_YEAR] < _tr
+    validation_idx = data[COL_YEAR] == _va
+    test_idx = data[COL_YEAR].isin(list(_te))
 
     # Scale numerical columns and encode categorical columns
     pdf_training = data[training_idx][predictor_columns + target_column]
@@ -358,7 +395,15 @@ def preprocess_data(tabformer_base_path):
             ("binary", BinaryEncoder(handle_missing="value", handle_unknown="value"))
         ]
     )
-    one_hot_encoder = Pipeline(steps=[("onehot", OneHotEncoder())])
+    # handle_unknown="ignore": with the default split the encoder only ever
+    # sees categories present before 2018, and that is fine. With an earlier
+    # test split it is not - "Chip Transaction" does not exist before ~2014, so
+    # a strict encoder raises on the 2015-16 test set. Encoding an unseen
+    # category as all-zeros is the right behaviour for a temporal split: a
+    # payment method the training era never saw carries no learned signal.
+    one_hot_encoder = Pipeline(
+        steps=[("onehot", OneHotEncoder(handle_unknown="ignore"))]
+    )
     robust_scaler = Pipeline(
         steps=[
             ("imputer", SimpleImputer(strategy="median")),
