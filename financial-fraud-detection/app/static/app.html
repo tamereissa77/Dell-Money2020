@@ -241,19 +241,19 @@ function render(a,c){
   if(st==='pending-approval'){
     h+='<div class="note">Closing requires a different named person — the submitter cannot approve their own case.</div>'+
        '<div style="margin-top:8px">'+
-       '<button class="act go" onclick="closeCase(\\'confirmed-fraud\\')">Close · confirmed fraud</button>'+
-       '<button class="act" onclick="closeCase(\\'false-positive\\')">Close · false positive</button>'+
-       '<button class="act" onclick="closeCase(\\'escalated\\')">Close · escalate</button></div>';
+       '<button class="act go" data-close="confirmed-fraud">Close · confirmed fraud</button>'+
+       '<button class="act" data-close="false-positive">Close · false positive</button>'+
+       '<button class="act" data-close="escalated">Close · escalate</button></div>';
   }
-  h+='<div style="margin-top:16px"><button class="act" onclick="draft()">Draft narrative</button>'+
-     '<button class="act" onclick="showGraph()">Open in graph</button>'+
-     '<button class="act" onclick="exportPack()">Evidence pack</button></div>';
+  h+='<div style="margin-top:16px"><button class="act" data-do="draft">Draft narrative</button>'+
+     '<button class="act" data-do="graph">Open in graph</button>'+
+     '<button class="act" data-do="pack">Evidence pack</button></div>';
   h+='<div id="draftbox"></div><div id="packbox"></div>';
   $('case-detail').innerHTML=h;
 }
 function btn(v,label,enabled){
   return '<button class="act'+(enabled?' go':'')+'" '+(enabled?'':'disabled ')+
-         'onclick="act(\\''+v+'\\')">'+label+'</button>';
+         'data-act="'+v+'">'+label+'</button>';
 }
 function actor(){ var a=($('actor')||{}).value||''; if(a) localStorage.setItem('actor',a); return a.trim(); }
 function act(v){
@@ -285,7 +285,7 @@ function draft(){
       '<div class="narr">'+d.narrative_en+'</div>'+
       '<div class="narr ar" style="margin-top:8px">'+d.narrative_ar+'</div>'+
       '<div class="cit">'+cits+'</div>'+
-      '<div style="margin-top:10px"><button class="act go" onclick="adopt()">Adopt as my narrative</button></div>';
+      '<div style="margin-top:10px"><button class="act go" data-do="adopt">Adopt as my narrative</button></div>';
   });
 }
 function adopt(){
@@ -309,6 +309,23 @@ function exportPack(){
   });
 }
 function showGraph(){ LOADED.graph=0; show('graph'); }
+
+// One listener for every control the case pane generates. Delegation means the
+// generated markup carries no quoted JS at all, which is what broke this
+// before: a mis-escaped quote in an inline onclick stopped the entire script
+// parsing, so no handler anywhere on the page bound and only the default view
+// worked.
+$('case-detail').addEventListener('click', function(e){
+  var t = e.target.closest('button'); if(!t) return;
+  if(t.dataset.act)   return act(t.dataset.act);
+  if(t.dataset.close) return closeCase(t.dataset.close);
+  switch(t.dataset.do){
+    case 'draft': return draft();
+    case 'graph': return showGraph();
+    case 'pack':  return exportPack();
+    case 'adopt': return adopt();
+  }
+});
 
 // --- audit -----------------------------------------------------------------
 function loadAudit(){
