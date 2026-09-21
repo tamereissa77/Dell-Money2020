@@ -206,12 +206,16 @@ read 32 ms while sitting 16,000 messages behind.
 | Steady state at 5,000 TPS | e2e worst 74–94 ms, mean 53–65 ms |
 | Batch scoring | 575,775/s (25,803 rows in 0.0448 s) |
 | Explanation, warm | 3.256 s — per-decision Shapley, not batch-averaged |
-| Ranking lift, top 500 | 11.8× to 47× depending on the window |
+| Model latency | 27–36 ms per batch, batch size 32–1024 (near-flat: it is fixed overhead) |
+| Ranking lift, top 500 | **12–50×** at the true base rate; ~1.7× in demo mode |
 | Power-cycle to usable | 13 s (43 s including the LLM) |
 | Broker loss recovery | 5 s, unattended |
 
-The lift is a **range, not a constant** — it depends on how many frauds are in
-the current queue window. Quote it with the window it came from.
+**Lift is the stable comparison** — it pits the two orderings at the same depth,
+so queue age does not affect it. **Recall-at-N is not**: it is the share of all
+frauds currently queued that land in the top N, so it falls as the queue
+accumulates. The same healthy pipeline reads ~90% early in a session and ~12% an
+hour later. Nothing degraded; the denominator grew. Quote the lift.
 
 ---
 

@@ -76,15 +76,20 @@ the opening; this adds four movements.
 
 The commercially important screen.
 
+> **Switch to the true base rate first** (presenter panel → *true rate*), then
+> give it a minute to fill. The headline figures below are only true at the
+> real fraud rate — see the warning after this section.
+
 > "Left is the incumbent's queue in its own order. Right is the same alerts,
 > reordered by the model. Nothing is removed — the rule and reason stay
 > attached, and the original position is recoverable."
 
 Switch the depth selector to **500**.
 
-> "Working 500 alerts instead of eighty thousand, the re-ranked queue surfaces
-> around ninety percent of the real frauds. The incumbent's own top 500 gets
-> under ten. Same investigator effort."
+> "Working the top 500 alerts instead of the whole queue, the re-ranked
+> ordering surfaces **[read the lift off the screen]** times as much real fraud
+> as the incumbent's own top 500. Same investigator effort, same alerts —
+> only the order changed."
 
 Point at the amber strip across the top.
 
@@ -92,12 +97,35 @@ Point at the amber strip across the top.
 > stream, the true base rate, and the incumbent's false-positive rate — 98 to
 > 99 percent, which is where real engines live."
 
-**Switch to the true base rate** (presenter panel → *true rate*). The screen
-goes quiet.
+> "In demo mode we run the fraud rate 33 times higher so something happens
+> while you are standing here. The screen says which mode is live at all
+> times."
 
-> "That is what 0.122 percent looks like. We show it deliberately — in demo
-> mode we run the fraud rate 33 times higher so something happens while you are
-> standing here, and the screen says so at all times."
+#### Quote the lift. Read everything else off the screen.
+
+**Lift is the stable figure.** It compares the two orderings at the same depth,
+so it does not care how long the demo has been running. Measured between
+**12× and 50×** across sessions at the true base rate.
+
+**Recall-at-500 is not stable, and you should not memorise it.** It is the
+share of *all* frauds currently in the queue that appear in the top 500 — so it
+falls as the queue accumulates. Early in a session it reads ~90%; an hour later
+the same healthy pipeline reads 12%, because there are now far more than 500
+frauds in the queue. Nothing has degraded; the denominator grew.
+
+Everything here is also mode-dependent:
+
+| | demo mode (4% fraud) | true rate (0.122%) |
+|---|---|---|
+| incumbent false-positive rate | ~65% | **98–99%** |
+| lift at top 500 | ~1.7× | **12–50×** |
+
+In demo mode the incumbent's queue is artificially fraud-rich, so it looks far
+better than it is and the lift collapses. **If you quote the strong numbers
+while the status bar says `demo`, the screen will contradict you.**
+
+Switch to the true rate before this screen, quote the lift, and read the rest
+off the display as you go.
 
 ### 2. Why a graph — **Tab: ENTITY GRAPH**
 

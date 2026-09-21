@@ -48,6 +48,13 @@ RULES = {
 }
 
 _recent = collections.defaultdict(collections.deque)   # user_id -> deque[ts]
+# Lifetime counters blend every regime the demo has run through. Switching the
+# generator from demo to the true base rate changes the incumbent's
+# false-positive rate from ~65% to ~99%, and a lifetime average takes tens of
+# minutes to follow - long enough that a presenter quoting the real figure is
+# contradicted by the screen. WINDOW holds the most recent judged alerts so the
+# published rate reflects the regime that is actually running.
+WINDOW = collections.deque(maxlen=int(os.environ.get("FP_WINDOW", "5000")))
 STATE = {"seen": 0, "alerted": 0, "by_rule": collections.Counter(),
          "true_pos": 0, "false_pos": 0}
 LOCK = threading.Lock()
@@ -129,6 +136,7 @@ def run():
                 STATE["by_rule"][h] += 1
             lbl = truth.get(rec["txn_id"])
             if lbl is not None:
+                WINDOW.append(int(lbl))
                 if lbl == 1:
                     STATE["true_pos"] += 1
                 else:
@@ -154,10 +162,13 @@ def metrics():
             "alerted": STATE["alerted"],
             "alert_rate": round(STATE["alerted"] / max(STATE["seen"], 1), 5),
             "true_positives": tp, "false_positives": fp,
-            # The headline for the comparison screen. Real engines sit at
-            # 90-98%; if this drifts outside that band the stub is miscalibrated
-            # and the comparison stops being a fair fight.
-            "false_positive_rate": round(fp / max(judged, 1), 4),
+            "lifetime_false_positive_rate": round(fp / max(judged, 1), 4),
+            # The headline for the comparison screen: recent judgements only, so
+            # it follows a mode switch within a minute instead of dragging the
+            # previous regime along for half an hour.
+            "false_positive_rate": round(
+                sum(1 for l in WINDOW if l == 0) / max(len(WINDOW), 1), 4),
+            "window": len(WINDOW),
             "judged": judged,
             "by_rule": dict(STATE["by_rule"]),
             "rules": RULES,
