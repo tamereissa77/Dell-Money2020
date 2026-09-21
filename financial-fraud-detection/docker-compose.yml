@@ -57,6 +57,8 @@ services:
       FEED_SOURCE: "${FEED_SOURCE:-file}"
       ALERT_URL: "http://alert-svc:8094"
       AUDIT_URL: "http://audit-svc:8095"
+      COPILOT_URL: "http://copilot-svc:8096"
+      SCORE_URL: "http://scoring-svc:8092"
       SCREEN_URL: "http://screening-stub:8093"
       GEN_URL: "http://txn-generator:8091"
       CUDA_CACHE_PATH: /nvcache

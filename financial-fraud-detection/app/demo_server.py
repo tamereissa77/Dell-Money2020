@@ -390,6 +390,100 @@ def api_queue():
     return jsonify(q or {"error": err, "incumbent": [], "ranked": []})
 
 
+# Everything below proxies a pipeline service so the browser only ever talks to
+# this origin. Six ports to remember is not a demo, it is a scavenger hunt.
+AUDIT_URL = os.environ.get("AUDIT_URL", "http://audit-svc:8095")
+COPILOT_URL = os.environ.get("COPILOT_URL", "http://copilot-svc:8096")
+SCORE_URL = os.environ.get("SCORE_URL", "http://scoring-svc:8092")
+
+
+def _post(base, path, payload, timeout=180):
+    try:
+        req = urllib.request.Request(
+            f"{base}{path}", data=json.dumps(payload or {}).encode(),
+            headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read().decode()), r.status
+    except urllib.error.HTTPError as e:
+        try:    return json.loads(e.read().decode()), e.code
+        except Exception: return {"error": str(e)}, e.code
+    except Exception as e:
+        return {"error": str(e)}, 502
+
+
+@app.get("/api/cases")
+def api_cases():
+    q = request.query_string.decode()
+    d, err = _get(ALERT_URL, f"/cases{'?' + q if q else ''}")
+    return jsonify(d if d is not None else {"error": err})
+
+
+@app.post("/api/case/<alert_id>/<verb>")
+def api_case_action(alert_id, verb):
+    d, code = _post(ALERT_URL, f"/case/{alert_id}/{verb}", request.get_json(silent=True))
+    return jsonify(d), code
+
+
+@app.get("/api/audit")
+def api_audit():
+    q = request.query_string.decode()
+    d, err = _get(AUDIT_URL, f"/records{'?' + q if q else ''}")
+    return jsonify(d if d is not None else {"error": err})
+
+
+@app.get("/api/audit/verify")
+def api_audit_verify():
+    d, err = _get(AUDIT_URL, "/verify")
+    return jsonify(d if d is not None else {"error": err})
+
+
+@app.get("/api/audit/export/<case_id>")
+def api_audit_export(case_id):
+    d, err = _get(AUDIT_URL, f"/export/{case_id}", timeout=30)
+    return jsonify(d if d is not None else {"error": err})
+
+
+@app.post("/api/copilot/draft/<alert_id>")
+def api_copilot_draft(alert_id):
+    d, code = _post(COPILOT_URL, f"/draft/{alert_id}", {})
+    return jsonify(d), code
+
+
+@app.post("/api/copilot/adopt/<draft_id>")
+def api_copilot_adopt(draft_id):
+    d, code = _post(COPILOT_URL, f"/draft/{draft_id}/adopt", request.get_json(silent=True))
+    return jsonify(d), code
+
+
+@app.get("/api/presenter/<path:rest>")
+def api_presenter_get(rest):
+    d, err = _get(GEN_URL, f"/{rest}")
+    return jsonify(d if d is not None else {"error": err})
+
+
+@app.post("/api/presenter/<path:rest>")
+def api_presenter(rest):
+    """Presenter controls proxied too, so the panel works from one origin
+    without CORS and without the operator knowing the generator's port."""
+    d, code = _post(GEN_URL, f"/{rest}", request.get_json(silent=True), timeout=15)
+    return jsonify(d), code
+
+
+@app.get("/api/health/all")
+def api_health_all():
+    """One call for the status bar: every service, one round trip."""
+    out = {}
+    for name, url, path in (("scoring", SCORE_URL, "/metrics"),
+                            ("screening", SCREEN_URL, "/metrics"),
+                            ("alerts", ALERT_URL, "/health"),
+                            ("audit", AUDIT_URL, "/health"),
+                            ("copilot", COPILOT_URL, "/health"),
+                            ("generator", GEN_URL, "/status")):
+        d, err = _get(url, path, timeout=4)
+        out[name] = {"ok": d is not None, "data": d, "error": err}
+    return jsonify(out)
+
+
 @app.get("/api/suppressed")
 def api_suppressed():
     q, err = _get(ALERT_URL, "/suppressed")
@@ -494,8 +588,25 @@ def graph_page(): return send_from_directory("static", "graph.html")
 def compare(): return send_from_directory("static","compare.html")
 
 
+@app.get("/live")
+def live_view():
+    """The v1 booth view on its own, so the v2 shell can host it in a frame
+    without duplicating its canvas renderer."""
+    return send_from_directory("static", "index.html")
+
+
 @app.get("/")
-def index(): return send_from_directory("static","index.html")
+def index():
+    """One URL for everything.
+
+    In v2 this serves the shell: one persistent chrome, tabs for every view,
+    one status bar, and every service proxied through this origin. In v1 it
+    serves the original booth page untouched - a v1 audience should see exactly
+    what they saw before, and nothing about v2 should leak into it.
+    """
+    if FEED_SOURCE == "kafka":
+        return send_from_directory("static", "app.html")
+    return send_from_directory("static", "index.html")
 
 def _shutdown(signum, frame):
     """Flask's threaded dev server ignores SIGTERM, so `docker compose stop`
