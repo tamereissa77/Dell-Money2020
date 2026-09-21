@@ -284,7 +284,7 @@ notes(s, "This is the emotional centre of the pitch. Let the bar chart do the ta
 # ---------------------------------------------------------------- 6 performance
 s = slide(); header(s, "Measured on the box", "Performance on a single NVIDIA GB10")
 mets = [("589,528","transactions scored per second","25,803 in 0.044 s"),
-        ("0.958","F1 score","precision 94.3% · recall 97.3%"),
+        ("0.958","F1 score — see caveat","benchmark artefact: honest figure is 0.78"),
         ("41.7 s","to preprocess 24.4M rows","graph construction on GPU"),
         ("23.0 s","to train end to end","GNN + XGBoost"),
         ("3.3 s","per live explanation","Shapley, computed on demand"),
@@ -488,6 +488,107 @@ bullets(s, [
 ])
 notes(s, "For Saudi institutions this is often the deciding factor, ahead of model quality.")
 
+# ------------------------------------------------- 13b benchmark: the finding
+s = slide(); header(s, "Reading the benchmark", "One column predicts the fraud")
+tf = tb(s, Inches(0.8), Inches(2.05), Inches(11.7), Inches(0.5))
+line(tf, "In the slice of IBM TabFormer that the standard benchmark tests on, every one "
+         "of the 2,087 fraudulent transactions occurs in the same city. Not most \u2014 all of them.",
+     15, C_DIM, False, SANS, 0, first=True)
+
+rows = [("if city == \"Rome\"  \u2192  fraud", "one line. no model.", "0.9803", "1.0000", "0.9900", C_RED),
+        ("GraphSAGE + XGBoost", "the full pipeline", "0.9429", "0.9732", "0.9578", C_TEXT)]
+y = Inches(2.95)
+hdr = tb(s, Inches(0.8), Inches(2.72), Inches(11.7), Inches(0.25))
+line(hdr, "APPROACH                                                             "
+          "PRECISION            RECALL                     F1", 10, C_DIM, True, MONO, 0, first=True)
+for name, sub, pr, rc, f1, col in rows:
+    panel(s, Inches(0.8), y, Inches(11.7), Inches(1.15))
+    t = tb(s, Inches(1.1), y+Inches(0.2), Inches(5.4), Inches(0.8))
+    line(t, name, 15, col, True, MONO if col == C_RED else SANS, 2, first=True)
+    line(t, sub, 11, C_DIM, False, SANS, 0)
+    for i,(v,lab) in enumerate(((pr,"precision"),(rc,"recall"),(f1,"F1"))):
+        t2 = tb(s, Inches(6.9)+Inches(1.85)*i, y+Inches(0.28), Inches(1.7), Inches(0.6))
+        line(t2, v, 21, col if i == 2 else C_TEXT, True, MONO, 0, first=True)
+    y += Inches(1.35)
+
+rule(s, Inches(0.8), Inches(5.95), Inches(1.5), C_RED)
+tf = tb(s, Inches(0.8), Inches(6.12), Inches(11.7), Inches(0.8))
+line(tf, "A single line of SQL beats the model on this slice.", 16, C_RED, True, SANS, 4, first=True)
+line(tf, "So any headline accuracy taken from it measures the dataset, not the method \u2014 and it is "
+         "discoverable by anyone who groups the frauds by city. The demo\u2019s own explainability said so "
+         "all along: its top attribution is \u201cmerchant city\u201d.", 13, C_DIM, False, SANS, 0)
+footer(s)
+notes(s, "Lead with this, do not wait to be asked. Being the people who found it is a far stronger "
+         "position than being the people who shipped it. TabFormer generates fraud in campaigns and "
+         "each campaign sits in one geography; the benchmark split lands the whole test period inside "
+         "a single-city campaign.")
+
+# ------------------------------------------------- 13c benchmark: honest number
+s = slide(); header(s, "The honest measurement", "Tested where geography varies, the model wins")
+tf = tb(s, Inches(0.8), Inches(2.05), Inches(11.7), Inches(0.5))
+line(tf, "Same model, same features, same code \u2014 re-run against a period where fraud spans "
+         "730 cities instead of one.", 15, C_DIM, False, SANS, 0, first=True)
+
+cols = [("2019", "standard benchmark", "1", "0.9900", "0.9578", "Rule wins", C_RED),
+        ("2015\u20132016", "geography varies", "730", "0.7568", "0.7800", "Model wins", C_GREEN)]
+x = Inches(0.8)
+for era, sub, cities, rulef1, modelf1, verdict, col in cols:
+    panel(s, x, Inches(2.85), Inches(5.75), Inches(2.55))
+    t = tb(s, x+Inches(0.35), Inches(3.05), Inches(5.0), Inches(2.2))
+    line(t, era, 26, C_TEXT, True, SANS, 1, first=True)
+    line(t, sub, 12, C_DIM, False, SANS, 10)
+    line(t, cities + "  fraud cities in the test set", 13, C_DIM, False, SANS, 10)
+    line(t, "best single rule        " + rulef1, 15, C_DIM, False, MONO, 4)
+    line(t, "GNN + XGBoost           " + modelf1, 15, col, True, MONO, 8)
+    line(t, verdict.upper(), 13, col, True, MONO, 0)
+    x += Inches(6.15)
+
+rule(s, Inches(0.8), Inches(5.72), Inches(1.5), C_GREEN)
+tf = tb(s, Inches(0.8), Inches(5.9), Inches(11.7), Inches(1.0))
+line(tf, "Quote 0.78, not 0.96.", 17, C_GREEN, True, SANS, 4, first=True)
+line(tf, "On the honest split the model reaches F1 0.78 at precision 0.82, against 0.68 for the best "
+         "single rule \u2014 a 14-point precision advantage no rules engine can reach, because the signal "
+         "is not in any one column. A smaller headline and a far stronger claim.",
+     13, C_DIM, False, SANS, 0)
+footer(s)
+notes(s, "This is the slide that makes the commercial argument. The high-precision dataset is the one "
+         "where our thesis is false; this is the one where it is true. Precision 0.82 vs 0.68 is the "
+         "number to say out loud.")
+
+# ------------------------------------------------- 13d benchmark: your data
+s = slide(); header(s, "On your data", "What changes, in both directions")
+pairs = [("Works in your favour", C_GREEN, [
+            ("Richer features", "Device, channel velocity, tenure, merchant risk history. No single column is a usable proxy."),
+            ("A real graph", "TabFormer gives card \u2192 transaction \u2192 merchant and nothing else. Shared devices, addresses and beneficiaries are what rules cannot express."),
+            ("The graph contribution here is understated", "This benchmark is close to the weakest possible showcase for a graph model."),
+         ]),
+         ("Works against you", C_AMBER, [
+            ("Late, partial labels", "Chargebacks settle over 60\u201390 days and confirmed fraud undercounts."),
+            ("Harsher imbalance", "Below the 0.122% base rate in this data."),
+            ("Continuous drift", "A model trained across a campaign boundary learns the campaign, which is exactly what the 2019 result shows."),
+         ])]
+x = Inches(0.8)
+for title, col, items in pairs:
+    panel(s, x, Inches(2.05), Inches(5.75), Inches(3.45))
+    t = tb(s, x+Inches(0.35), Inches(2.25), Inches(5.05), Inches(3.1))
+    line(t, title.upper(), 11, col, True, MONO, 10, first=True)
+    for i,(h, bdy) in enumerate(items):
+        line(t, h, 13.5, C_TEXT, True, SANS, 2)
+        line(t, bdy, 11.5, C_DIM, False, SANS, 9)
+    x += Inches(6.15)
+
+rule(s, Inches(0.8), Inches(5.78), Inches(1.5), C_GREEN)
+tf = tb(s, Inches(0.8), Inches(5.96), Inches(11.7), Inches(1.0))
+line(tf, "The metric that transfers: detection at fixed review capacity.", 17, C_GREEN, True, SANS, 4, first=True)
+line(tf, "Fraud teams buy on \u201cmy team can work 500 alerts a day \u2014 how much fraud do I catch?\u201d. The live "
+         "demo re-ranks an incumbent engine\u2019s queue and reports how much fraud lands in the top N. Because "
+         "it compares orderings inside that queue, the artefact above does not touch it \u2014 and a bank can "
+         "validate it against its own historical alerts in about a week, deploying nothing.",
+     13, C_DIM, False, SANS, 0)
+footer(s)
+notes(s, "Close on the PoC. Expect absolute F1 on production data below 0.78, not above \u2014 harsher base "
+         "rate, noisier labels. Say so. The ranking metric is what they can check themselves.")
+
 # ---------------------------------------------------------------- 14 honesty
 s = slide(); header(s, "What we are not claiming", "The caveats, stated first")
 bullets(s, [
@@ -495,8 +596,8 @@ bullets(s, [
   "The held-out set runs at 8.09% fraud; the true base rate is 0.122%. At the real rate, false-positive economics change materially. Any pilot must be re-measured on live distributions."),
  ("Training undersamples the majority class.",
   "A 0.1 fraud ratio with computed class weights. Standard practice for extreme imbalance, and a deliberate modelling choice rather than a hidden one."),
- ("The dataset is public and synthetic-adjacent.",
-  "IBM TabFormer, Apache 2.0. It demonstrates the method; it is not a proxy for any institution's own fraud patterns."),
+ ("The dataset is public, synthetic-adjacent, and carries a geographic artefact.",
+  "IBM TabFormer, Apache 2.0. Every fraud in the benchmark's test slice sits in one city, so a one-line rule scores F1 0.99 there. Measured on a period where geography varies, the model reaches 0.78 and beats the best rule \u2014 see the three preceding slides."),
  ("A production deployment needs the surrounding system.",
   "Case management, feedback loops, model monitoring, champion/challenger and drift detection are all out of scope for this demo."),
 ])
