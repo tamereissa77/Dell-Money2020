@@ -277,6 +277,38 @@ services:
       retries: 30
       start_period: 15s
 
+  # --- stage 4: investigator's draft narrative ------------------------------
+  # Template narrator only for now. LLM_URL is deliberately empty: the brief
+  # makes the deterministic path mandatory so the demo is never one model
+  # download away from failing on the booth floor.
+  copilot-svc:
+    build: ./docker/svc
+    image: ffd-svc:latest
+    container_name: ffd-copilot-svc
+    restart: unless-stopped
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    command: ["/svc/copilot_svc/copilot.py"]
+    ports:
+      - "${COPILOT_PORT:-8096}:8096"
+    volumes:
+      - ./services:/svc:ro
+      - ./data/policy:/policy:ro
+    environment:
+      BROKER: "redpanda:9092"
+      PORT: "8096"
+      POLICY_DIR: /policy
+      ALERT_URL: "http://alert-svc:8094"
+      DEMO_URL: "http://demo:8090"
+      LLM_URL: "${COPILOT_LLM_URL:-}"
+    healthcheck:
+      test: ["CMD","bash","-c","exec 3<>/dev/tcp/localhost/8096 && echo -e 'GET /health HTTP/1.0\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q 200"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
 volumes:
   redpanda-data:
   alert-state:

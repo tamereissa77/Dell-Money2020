@@ -15,8 +15,8 @@ are recorded as not-yet-tested so nothing reads as passing that has not run.
 | 8 | `mule-fanin-fanout` caught by model, missed by stub | 2 | **NOT SATISFIABLE on this split** — see below |
 | 9 | No case closes without a named human action | 3 | **PASS** — 6 bypass attempts refused |
 | 10 | Evidence pack exports; tamper fails verification | 3 | **PASS** — tamper named to the record |
-| 11 | Cited draft in Arabic and English | 4 | not started |
-| 12 | Template fallback with the LLM stopped | 4 | not started |
+| 11 | Cited draft in Arabic and English | 4 | **PASS** — 8/8 citations resolve |
+| 12 | Template fallback with the LLM stopped | 4 | **PARTIAL** — template path proven, no LLM to fail over from |
 | 13 | Broker killed mid-demo: degraded banner, recovers | 5 | partial — `/api/stream` reports `degraded`; banner is Stage 5 |
 | 14 | Full power-cycle recovery ≤ 30 s | 5 | not tested |
 | 15 | `docker manifest inspect` confirms arm64 for all images | 5 | **partial PASS** — all four current images verified arm64 |
@@ -233,6 +233,52 @@ POST/PUT/DELETE/PATCH /records → 405      POST /append|/audit|/write → 404
 6,900 TPS that is ~600M records a day and none of them is a decision. The score
 that matters is the one attached to an alert, captured there with its model,
 feature and data versions.
+
+## 11 — grounded, cited, bilingual draft
+
+`POST /draft/<alert_id>` returns an investigator's draft narrative in English
+and Arabic, sharing one numbered citation set. Every citation resolved:
+
+```
+[1] alert        S000679857                         resolves
+[2] score        model prediction_and_shapley_np:1  resolves
+[3] policy       POL-MODEL-01                       resolves
+[4] attribution  shapley:t000679857                 resolves
+[5..8] policy    POL-CASE-01, POL-AML-02, POL-OPS-01, POL-OPS-02
+8 resolve, 0 dangling
+```
+
+The narrative is **assembled from** the citation list rather than annotated
+with it, so an uncited assertion cannot be emitted. Grounding is 12 synthetic
+policy documents in `data/policy/`, the alert record, and the per-decision
+Shapley attribution.
+
+**Three controls, all structural:**
+
+- **Never a filing.** An output guard rejects "suspicious transaction report",
+  "SAR filing" and similar, on generated text *and* on analyst edits. Verified:
+  two such edits rejected with 400, a legitimate edit accepted with 200.
+- **Machine-drafted until adopted.** Status stays `machine-drafted`; adoption
+  requires a named analyst (400 without one), preserves the machine text
+  alongside the edit, and publishes `narrative.adopt` to the audit chain —
+  confirmed at record 5, chain still verifying clean.
+- **Model output is not a conclusion.** Every draft states it is decision
+  support, citing POL-MODEL-01. Where one attribution dominates the rest by
+  3x, the draft additionally requires the analyst to record whether that
+  feature is behaviourally meaningful or a population characteristic of the
+  training data (POL-MODEL-02) — which is precisely the "merchant city"
+  problem in `LIMITATIONS.md`, surfaced into the workflow rather than hidden.
+
+## 12 — fallback with no LLM
+
+**Partial, and worth stating precisely.** The deterministic template narrator
+works and is the only generator wired: `LLM_URL` is empty, `llm_available` is
+false, and the drafts above were produced with no model in the path at all.
+
+What has **not** been demonstrated is a *failover* — stopping a running LLM and
+watching the template take over — because there is no LLM path yet. The
+criterion is met in substance (the demo cannot be broken by a missing model)
+but the specific test it describes cannot run until one exists.
 
 ## 5 — batch throughput preserved
 
